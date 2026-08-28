@@ -1,0 +1,171 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum UserRole {
+  ADMIN
+}
+
+enum CourseLevel {
+  BEGINNER
+  INTERMEDIATE
+  ADVANCED
+}
+
+enum CourseModality {
+  ONSITE
+  ONLINE
+  HYBRID
+}
+
+enum CourseStatus {
+  ACTIVE
+  INACTIVE
+}
+
+enum InquiryStatus {
+  PENDING
+  READ
+  ANSWERED
+}
+
+enum PromotionStatus {
+  ACTIVE
+  INACTIVE
+  EXPIRED
+}
+
+model User {
+  id                  String               @id @default(uuid())
+  email               String               @unique
+  passwordHash        String
+  firstName           String
+  lastName            String
+  role                UserRole             @default(ADMIN)
+  isActive            Boolean              @default(true)
+  createdAt           DateTime             @default(now())
+  updatedAt           DateTime             @updatedAt
+  passwordResetTokens PasswordResetToken[]
+
+  @@index([role])
+  @@index([isActive])
+}
+
+model Business {
+  id           String   @id @default(uuid())
+  singletonKey String   @default("business") @unique
+  name         String
+  description  String?
+  address      String?
+  phone        String?
+  email        String?
+  socialLinks  Json?
+  openingHours Json?
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+}
+
+model Category {
+  id          String   @id @default(uuid())
+  name        String
+  slug        String   @unique
+  description String?
+  isActive    Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  courses     Course[]
+}
+
+model Course {
+  id          String         @id @default(uuid())
+  categoryId  String
+  title       String
+  slug        String         @unique
+  description String?
+  duration    String
+  capacity    Int
+  availableSlots Int
+  startDate   DateTime
+  price       Decimal        @db.Decimal(10, 2)
+  level       CourseLevel?
+  modality    CourseModality @default(ONSITE)
+  status      CourseStatus   @default(ACTIVE)
+  isFeatured  Boolean        @default(false)
+  createdAt   DateTime       @default(now())
+  updatedAt   DateTime       @updatedAt
+  category    Category       @relation(fields: [categoryId], references: [id], onDelete: Restrict)
+  images      CourseImage[]
+  inquiries   Inquiry[]
+  promotions  Promotion[]
+
+  @@index([categoryId])
+  @@index([status])
+  @@index([modality])
+  @@index([isFeatured])
+  @@index([startDate])
+}
+
+model CourseImage {
+  id        String   @id @default(uuid())
+  courseId  String
+  url       String
+  publicId  String?
+  altText   String?
+  sortOrder Int      @default(0)
+  createdAt DateTime @default(now())
+  course    Course   @relation(fields: [courseId], references: [id], onDelete: Cascade)
+
+  @@index([courseId])
+}
+
+model Inquiry {
+  id        String        @id @default(uuid())
+  courseId  String?
+  name      String
+  email     String
+  phone     String?
+  subject   String
+  message   String
+  status    InquiryStatus @default(PENDING)
+  createdAt DateTime      @default(now())
+  updatedAt DateTime      @updatedAt
+  course    Course?       @relation(fields: [courseId], references: [id], onDelete: SetNull)
+
+  @@index([courseId])
+  @@index([status])
+  @@index([createdAt])
+}
+
+model Promotion {
+  id          String          @id @default(uuid())
+  courseId    String?
+  title       String
+  description String?
+  discountPct Int?
+  status      PromotionStatus @default(ACTIVE)
+  startsAt    DateTime?
+  endsAt      DateTime?
+  createdAt   DateTime        @default(now())
+  updatedAt   DateTime        @updatedAt
+  course      Course?         @relation(fields: [courseId], references: [id], onDelete: SetNull)
+
+  @@index([courseId])
+  @@index([status])
+  @@index([startsAt])
+  @@index([endsAt])
+}
+
+model PasswordResetToken {
+  id        String   @id @default(uuid())
+  userId    String
+  tokenHash String   @unique
+  expiresAt DateTime
+  usedAt    DateTime?
+  createdAt DateTime @default(now())
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
