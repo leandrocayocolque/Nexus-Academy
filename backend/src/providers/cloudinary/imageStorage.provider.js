@@ -1,9 +1,40 @@
-export class ImageStorageProvider {
-  async upload(_file) {
-    throw new Error('Image upload is not implemented yet.');
+import { ErrorServicioExterno } from '../../shared/errors/AppError.js';
+
+export class ProveedorAlmacenamientoImagenes {
+  async subir(_archivo) {
+    throw new ErrorServicioExterno('almacenamiento de imágenes');
   }
 
-  async remove(_publicId) {
-    throw new Error('Image removal is not implemented yet.');
+  async eliminar(_idPublico) {
+    throw new ErrorServicioExterno('almacenamiento de imágenes');
   }
 }
+
+export class ProveedorAlmacenamientoImagenesMemoria extends ProveedorAlmacenamientoImagenes {
+  constructor() {
+    super();
+    this.subidas = [];
+    this.eliminadas = [];
+  }
+
+  async subir(archivo) {
+    const resultado = {
+      idPublico: `memoria/${this.subidas.length + 1}`,
+      url: `https://imagenes.local/${this.subidas.length + 1}`,
+      nombre: archivo.originalname
+    };
+    this.subidas.push({ archivo, resultado });
+    return resultado;
+  }
+
+  async eliminar(idPublico) {
+    this.eliminadas.push(idPublico);
+    return { idPublico, eliminado: true };
+  }
+}
+
+export class ProveedorAlmacenamientoNoDisponible extends ProveedorAlmacenamientoImagenes {}
+
+export const StorageProvider = ProveedorAlmacenamientoImagenes;
+export const ImageStorageProvider = ProveedorAlmacenamientoImagenes;
+export const FakeStorageProvider = ProveedorAlmacenamientoImagenesMemoria;

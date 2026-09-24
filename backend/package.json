@@ -8,12 +8,19 @@
     "start": "node src/server.js",
     "test": "vitest run",
     "test:watch": "vitest",
+    "lint": "eslint .",
+    "format": "prettier --write .",
+    "format:check": "prettier --check .",
+    "prisma:format": "prisma format",
+    "prisma:validate": "prisma validate",
     "prisma:generate": "prisma generate",
     "prisma:migrate": "prisma migrate dev",
-    "prisma:seed": "node prisma/seed.js"
+    "prisma:migrate:deploy": "prisma migrate deploy",
+    "prisma:seed": "node prisma/seed.js",
+    "prisma:studio": "prisma studio"
   },
   "dependencies": {
-    "@prisma/client": "^6.14.0",
+    "@prisma/client": "^6.12.0",
     "bcryptjs": "^2.4.3",
     "cloudinary": "^2.5.1",
     "compression": "^1.7.5",
@@ -23,22 +30,21 @@
     "express-rate-limit": "^7.5.0",
     "helmet": "^8.0.0",
     "jsonwebtoken": "^9.0.2",
-    "multer": "^1.4.5-lts.1",
-    "nodemailer": "^6.9.16",
-    "openai": "^4.77.0",
+    "multer": "^2.4.0",
+    "nodemailer": "^10.0.10",
     "pino": "^9.5.0",
     "pino-http": "^10.3.0",
-    "resend": "^4.0.1",
     "slugify": "^1.6.6",
-    "swagger-jsdoc": "^6.2.8",
-    "swagger-ui-express": "^5.0.1",
     "zod": "^3.24.1"
   },
   "devDependencies": {
-    "@faker-js/faker": "^9.3.0",
-    "prisma": "^6.14.0",
+    "@eslint/js": "^10.0.1",
+    "eslint": "^10.11.0",
+    "globals": "^17.12.0",
+    "prettier": "^3.9.9",
+    "prisma": "^6.12.0",
     "supertest": "^7.0.0",
-    "vitest": "^2.1.8"
+    "vitest": "^5.0.1"
   },
   "prisma": {
     "seed": "node prisma/seed.js"

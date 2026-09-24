@@ -1,6 +1,7 @@
-import { AppError } from '../errors/AppError.js';
-import { errorCodes } from '../errors/errorCodes.js';
+import { ErrorNoEncontrado } from '../errors/AppError.js';
 
-export const notFound = (req, _res, next) => {
-  next(new AppError(`Route ${req.method} ${req.originalUrl} not found.`, 404, errorCodes.NOT_FOUND));
-};
+export function rutaNoEncontrada(solicitud, _respuesta, siguiente) {
+  siguiente(new ErrorNoEncontrado(`Ruta ${solicitud.method} ${solicitud.path} no encontrada.`));
+}
+
+export const notFound = rutaNoEncontrada;

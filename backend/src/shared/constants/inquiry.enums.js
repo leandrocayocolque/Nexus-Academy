@@ -1,1 +1,2 @@
-export const inquiryStatuses = ['PENDING', 'READ', 'ANSWERED'];
+export const estadosConsulta = Object.freeze(['PENDIENTE', 'LEIDA', 'RESPONDIDA']);
+export const inquiryStatuses = estadosConsulta;
