@@ -1,6 +1,6 @@
 # Backend de NEXUS Academy
 
-Backend modular en Node.js, Express, Prisma y PostgreSQL. La aplicación HTTP expone únicamente `GET /api/health`; las reglas de identidad y negocio están implementadas detrás de servicios inyectables, pero todavía no se publican como endpoints.
+Backend modular en Node.js, Express, Prisma y PostgreSQL. La API REST se publica bajo `/api` con el flujo Route -> Middleware -> Controller -> Service -> Repository. La documentación interactiva está en `GET /api/docs` (Swagger UI) y la especificación OpenAPI en `GET /api/docs.json`.
 
 La inteligencia artificial está deliberadamente fuera del proceso principal y no forma parte de esta base.
 
@@ -136,10 +136,34 @@ tests/
   modules/              servicios de identidad y negocio
   providers/            adaptadores sin red real
   repositories/         contratos de persistencia con cliente simulado
+  api/                  pruebas HTTP con supertest por módulo
   runtime/              health, defensas, configuración y apagado
 ```
 
-No hay controllers ni routers de negocio montados. Agregar HTTP requiere una fase separada que preserve validación, autorización y límites ya definidos.
+## API HTTP
+
+Cada módulo expone `*.controller.js` y `*.routes.js`; `src/routes.js` los agrega bajo `/api`. Las rutas públicas y las de administración (`/api/admin/*`) se separan: todo `/api/admin/*` y `/api/usuarios/*` exige `Authorization: Bearer <jwt>` con rol `ADMIN`.
+
+| Módulo        | Públicas                                                                                      | Administración (`/api/admin`)                                                                      |
+| ------------- | --------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------- |
+| Autenticación | `POST /api/autenticacion/{registro,login,logout,recuperar-contrasena,restablecer-contrasena}` | —                                                                                                  |
+| Usuario       | `GET/PATCH /api/usuarios/me` (requiere token)                                                 | —                                                                                                  |
+| Academia      | `GET /api/academia`                                                                           | `PUT /academia`                                                                                    |
+| Categorías    | `GET /api/categorias` (sólo activas)                                                          | `GET, POST /categorias`, `PATCH, DELETE /categorias/:id`                                           |
+| Cursos        | `GET /api/cursos`, `GET /api/cursos/:id` (sólo activos)                                       | `GET, POST /cursos`, `GET, PATCH, DELETE /cursos/:id`, `PATCH /cursos/:id/{estado,destacado}`      |
+| Imágenes      | —                                                                                             | `POST /cursos/:id/imagenes` (multipart, campo `imagenes`), `DELETE /cursos/:id/imagenes/:imagenId` |
+| Consultas     | `POST /api/consultas`                                                                         | `GET /consultas`, `GET, DELETE /consultas/:id`, `PATCH /consultas/:id/estado`                      |
+| Promociones   | `GET /api/promociones` (sólo vigentes)                                                        | `GET, POST /promociones`, `GET, PATCH, DELETE /promociones/:id`                                    |
+| Dashboard     | —                                                                                             | `GET /dashboard?desde&hasta&limite&umbral`                                                         |
+
+Decisiones de la capa HTTP:
+
+- **Registro:** mientras no exista ningún administrador, `POST /api/autenticacion/registro` es abierto (alta inicial). Después exige el token de un administrador, para que nadie pueda autoasignarse permisos.
+- **Logout:** los JWT no tienen estado; el endpoint valida el token y el cliente lo descarta.
+- **Visibilidad pública:** los cursos inactivos no aparecen en `/api/cursos` y su detalle responde 404; las categorías públicas son sólo las activas.
+- **Límites de solicitudes:** login y registro usan el limitador de inicio de sesión; recuperación/restablecimiento, el de restablecimiento; `POST /api/consultas`, el de consultas.
+- **Imágenes:** hasta 5 archivos por solicitud y 10 por curso. Se verifica la firma binaria además del MIME declarado. Si falla una subida o la persistencia, se eliminan las imágenes externas ya subidas.
+- **Validación:** los services validan con Zod; los errores se responden como `400 DATOS_INVALIDOS` con `detalles`.
 
 ## Verificación local
 

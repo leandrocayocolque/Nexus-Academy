@@ -148,6 +148,18 @@ export class ErrorCursoDuplicado extends AppError {
   }
 }
 
+export class ErrorImagenNoEncontrada extends AppError {
+  constructor() {
+    super('La imagen solicitada no existe en el curso.', 404, codigosError.IMAGEN_NO_ENCONTRADA);
+  }
+}
+
+export class ErrorLimiteImagenes extends AppError {
+  constructor(maximo) {
+    super(`Un curso no puede tener más de ${maximo} imágenes.`, 409, codigosError.LIMITE_IMAGENES);
+  }
+}
+
 export class ErrorConsultaNoEncontrada extends AppError {
   constructor() {
     super('La consulta solicitada no existe.', 404, codigosError.CONSULTA_NO_ENCONTRADA);

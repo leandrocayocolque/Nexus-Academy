@@ -68,6 +68,7 @@ export function crearServicioAutenticacion({
   exigirMetodo(repositorioUsuarios, 'buscarPorCorreo', 'repositorioUsuarios');
   exigirMetodo(repositorioUsuarios, 'existePorCorreo', 'repositorioUsuarios');
   exigirMetodo(repositorioUsuarios, 'crear', 'repositorioUsuarios');
+  exigirMetodo(repositorioUsuarios, 'existeAdministrador', 'repositorioUsuarios');
   exigirMetodo(repositorioTokens, 'buscarPorHash', 'repositorioTokens');
   exigirMetodo(gestorTransacciones, 'ejecutar', 'gestorTransacciones');
   exigirMetodo(contrasenas, 'hashear', 'contrasenas');
@@ -83,6 +84,10 @@ export function crearServicioAutenticacion({
   }
 
   return Object.freeze({
+    existeAdministrador() {
+      return repositorioUsuarios.existeAdministrador();
+    },
+
     async registrarAdministrador(entrada) {
       const datos = esquemaRegistroAdministrador.parse(entrada);
       if (await repositorioUsuarios.existePorCorreo(datos.correo)) {

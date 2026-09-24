@@ -7,6 +7,7 @@ export const configuracionSeguridad = Object.freeze({
   bytesTokenRestablecimiento: 32,
   cargaImagenes: Object.freeze({
     cantidadMaxima: 5,
+    cantidadMaximaPorCurso: 10,
     tamanoMaximoBytes: 5 * 1024 * 1024,
     tiposMimePermitidos: Object.freeze(['image/jpeg', 'image/png', 'image/webp'])
   }),

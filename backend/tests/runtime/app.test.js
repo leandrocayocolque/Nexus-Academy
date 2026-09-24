@@ -5,7 +5,7 @@ import { crearAplicacion } from '../../src/app.js';
 import { crearMiddlewareCors } from '../../src/config/cors.config.js';
 import { manejarError } from '../../src/shared/errors/errorHandler.js';
 
-describe('Runtime HTTP health-only', () => {
+describe('Runtime HTTP base', () => {
   it('expone únicamente el health check esperado', async () => {
     const aplicacion = crearAplicacion();
 
@@ -26,7 +26,7 @@ describe('Runtime HTTP health-only', () => {
     '/api/promotions',
     '/api/dashboard',
     '/api/ai/recommendations'
-  ])('mantiene sin montar la ruta de negocio %s', async (ruta) => {
+  ])('no monta rutas de negocio sin servicios ni con nombres en inglés: %s', async (ruta) => {
     await request(crearAplicacion())
       .get(ruta)
       .expect(404)

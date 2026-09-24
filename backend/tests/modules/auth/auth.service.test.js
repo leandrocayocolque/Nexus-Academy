@@ -13,6 +13,7 @@ function crearDependencias() {
   const repositorioUsuarios = {
     buscarPorCorreo: vi.fn(),
     existePorCorreo: vi.fn(),
+    existeAdministrador: vi.fn(),
     crear: vi.fn()
   };
   const repositorioTokens = { buscarPorHash: vi.fn() };

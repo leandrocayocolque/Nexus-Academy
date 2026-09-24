@@ -1,4 +1,8 @@
+import { Prisma } from '@prisma/client';
+
+// Prisma.Decimal llega minificado: su constructor no se llama "Decimal".
 function esDecimal(valor) {
+  if (Prisma.Decimal.isDecimal(valor)) return true;
   return Boolean(
     valor &&
     typeof valor === 'object' &&

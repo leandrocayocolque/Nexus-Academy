@@ -10,6 +10,7 @@ function crearRepositorios() {
     usuarios: {
       buscarPorCorreo: funcion(),
       existePorCorreo: funcion(),
+      existeAdministrador: funcion(),
       crear: funcion(),
       buscarPorId: funcion(),
       actualizar: funcion()
@@ -35,6 +36,7 @@ function crearRepositorios() {
       actualizar: funcion(),
       eliminar: funcion()
     },
+    imagenesCurso: { buscarPorId: funcion(), eliminar: funcion() },
     consultas: {
       buscarPorId: funcion(),
       listar: funcion(),

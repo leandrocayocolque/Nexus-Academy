@@ -7,6 +7,7 @@ import { crearGestorTransacciones } from './database/transactionManager.js';
 import { crearServicioAutenticacion } from './modules/auth/auth.service.js';
 import { crearServicioNegocio } from './modules/business/business.service.js';
 import { crearServicioCategorias } from './modules/categories/categories.service.js';
+import { crearServicioImagenesCurso } from './modules/courses/courseImages.service.js';
 import { crearServicioCursos } from './modules/courses/courses.service.js';
 import { crearServicioDashboard } from './modules/dashboard/dashboard.service.js';
 import { crearServicioConsultas } from './modules/inquiries/inquiries.service.js';
@@ -42,6 +43,13 @@ export function crearServicios({
       proveedorImagenes,
       registrador
     }),
+    imagenesCurso: crearServicioImagenesCurso({
+      repositorioCursos: repositorios.cursos,
+      repositorioImagenes: repositorios.imagenesCurso,
+      gestorTransacciones,
+      proveedorImagenes,
+      registrador
+    }),
     consultas: crearServicioConsultas({
       repositorioConsultas: repositorios.consultas,
       repositorioCursos: repositorios.cursos,
@@ -57,7 +65,7 @@ export function crearServicios({
 }
 
 export function crearComposicion({
-  aplicacion = crearAplicacion(),
+  aplicacion,
   configuracion = entorno,
   cicloVidaBaseDatos = baseDatos,
   registrador = registro,
@@ -99,7 +107,7 @@ export function crearComposicion({
       : Object.freeze({}));
 
   return Object.freeze({
-    aplicacion,
+    aplicacion: aplicacion ?? crearAplicacion({ servicios: serviciosResueltos }),
     configuracion,
     cicloVidaBaseDatos,
     registrador,

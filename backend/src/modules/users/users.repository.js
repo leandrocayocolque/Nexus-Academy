@@ -29,6 +29,13 @@ export function crearRepositorioUsuarios(cliente) {
       return Boolean(encontrado);
     },
 
+    async existeAdministrador() {
+      const encontrado = await ejecutar(() =>
+        usuarios.findFirst({ where: { rol: 'ADMIN' }, select: { id: true } })
+      );
+      return Boolean(encontrado);
+    },
+
     async listar({ pagina, limite, activo, rol, buscar } = {}) {
       const paginacion = normalizarPaginacion({ pagina, limite });
       const texto = limpiarTexto(buscar);

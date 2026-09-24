@@ -137,9 +137,9 @@ export function crearServicioCursos({
       return { mensaje: 'El curso fue eliminado correctamente.' };
     },
 
-    async obtenerCurso(id) {
+    async obtenerCurso(id, { soloActivos = false } = {}) {
       const curso = await repositorioCursos.buscarPorId(esquemaIdentificadorCurso.parse(id));
-      if (!curso) throw new ErrorCursoNoEncontrado();
+      if (!curso || (soloActivos && !curso.activo)) throw new ErrorCursoNoEncontrado();
       return mapearCurso(curso);
     },
 
@@ -151,11 +151,12 @@ export function crearServicioCursos({
       return mapearCurso(curso);
     },
 
-    async buscarCursos(entrada = {}) {
+    async buscarCursos(entrada = {}, { soloActivos = false } = {}) {
       const datos = esquemaBuscarCursos.parse(entrada);
       const { categoria, fechaInicio, ...filtros } = datos;
       const resultado = await repositorioCursos.listar({
         ...filtros,
+        ...(soloActivos ? { activo: true } : {}),
         ...(categoria ? { slugCategoria: crearSlug(categoria) } : {}),
         ...(fechaInicio ? { fechaDesde: fechaInicio } : {})
       });

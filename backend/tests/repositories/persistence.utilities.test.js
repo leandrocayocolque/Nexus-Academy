@@ -52,3 +52,14 @@ describe('utilidades de persistencia', () => {
     expect(serializarDecimales([new Decimal('1.20')])).toEqual(['1.20']);
   });
 });
+
+describe('serialización de Prisma.Decimal', () => {
+  it('convierte decimales reales de Prisma a texto', async () => {
+    const { Prisma } = await import('@prisma/client');
+    const { mapearCurso } = await import('../../src/shared/mappers/persistencia.js');
+
+    expect(
+      mapearCurso({ precio: new Prisma.Decimal('599.5'), activo: true, cuposDisponibles: 1 })
+    ).toMatchObject({ precio: '599.5', disponible: true });
+  });
+});
