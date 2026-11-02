@@ -9,9 +9,9 @@ import AdminLayout from './components/AdminLayout';
 import Dashboard from './components/Dashboard';
 import GestionCursos from './components/GestionCursos';
 import GestionCategorias from './components/GestionCategorias';
+import GestionConsultas from './components/GestionConsultas';
 
-
-const GestionConsultas = () => <h2 style={{ color: 'white' }}>Bandeja de Consultas (Próximamente)</h2>;
+import { Toaster } from 'sonner';
 
 function App() {
   return (
@@ -38,4 +38,27 @@ function App() {
   );
 }
 
-export default App;
+export default function App() {
+  return (
+    <>
+      {/* Contenedor global de notificaciones */}
+      <Toaster 
+        position="bottom-right" 
+        toastOptions={{
+          style: {
+            background: '#0a0a0a',
+            border: '1px solid var(--primary-green)',
+            color: 'var(--text-main)',
+            fontFamily: 'Consolas, monospace',
+            borderRadius: '4px'
+          },
+        }} 
+      />
+      
+      {/* Acá sigue el resto de tu código actual (AppContainer, Navbar, Routes, etc.) */}
+      <div style={appContainerStyle}>
+         ...
+      </div>
+    </>
+  );
+}
