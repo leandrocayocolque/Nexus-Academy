@@ -1,22 +1,20 @@
 import React, { useState } from 'react';
 import { cursosMock } from '../data/cursos';
+import { toast } from 'sonner';
 
 export default function GestionCursos() {
   const [cursos, setCursos] = useState(cursosMock);
   
   // Estados de ABM
   const [mostrarFormulario, setMostrarFormulario] = useState(false);
-
   const [modoImagen, setModoImagen] = useState('url');
-
   const [formData, setFormData] = useState({ id: null, titulo: '', categoria: 'Tecnología', tipo: 'Curso', duracion: '', descripcion: '', imagen: '' });
 
   // Estados de Paginación
   const [paginaActual, setPaginaActual] = useState(1);
-  const [itemsPorPagina, setItemsPorPagina] = useState(10); // Por defecto en 10
+  const [itemsPorPagina, setItemsPorPagina] = useState(10);
 
   // --- LÓGICA DE PAGINACIÓN ---
-  // Calculamos qué porción del arreglo mostrar según la página
   const indiceUltimoCurso = paginaActual * itemsPorPagina;
   const indicePrimerCurso = indiceUltimoCurso - itemsPorPagina;
   const cursosPaginados = cursos.slice(indicePrimerCurso, indiceUltimoCurso);
@@ -33,14 +31,13 @@ export default function GestionCursos() {
 
   const handleCambioItems = (e) => {
     setItemsPorPagina(Number(e.target.value));
-    setPaginaActual(1); // Si cambiás la cantidad, te devuelve a la página 1 para no quedar en una página vacía
+    setPaginaActual(1); 
   };
 
   // --- FUNCIONES DE ABM ---
   const handleNuevo = () => {
     setFormData({ id: null, titulo: '', categoria: 'Tecnología', tipo: 'Curso', duracion: '', descripcion: '', imagen: '' });
     setMostrarFormulario(true);
-    
   };
 
   const handleEditar = (curso) => {
@@ -49,13 +46,20 @@ export default function GestionCursos() {
   };
 
   const handleEliminar = (id) => {
-    if (window.confirm("¿Estás seguro de que querés eliminar este curso?")) {
-      setCursos(cursos.filter((curso) => curso.id !== id));
-      // Si borras el último ítem de una página, te retrocede a la anterior
-      if (cursosPaginados.length === 1 && paginaActual > 1) {
-        setPaginaActual(paginaActual - 1);
-      }
-    }
+    toast('¿Eliminar curso?', {
+      description: 'Se borrará del catálogo público.',
+      action: {
+        label: 'Eliminar',
+        onClick: () => {
+          setCursos(cursos.filter((curso) => curso.id !== id));
+          toast.success('El curso fue eliminado.');
+          if (cursosPaginados.length === 1 && paginaActual > 1) {
+            setPaginaActual(paginaActual - 1);
+          }
+        }
+      },
+      cancel: { label: 'Cancelar' }
+    });
   };
 
   const handleChange = (e) => setFormData({ ...formData, [e.target.name]: e.target.value });
@@ -64,8 +68,10 @@ export default function GestionCursos() {
     e.preventDefault();
     if (formData.id) {
       setCursos(cursos.map(c => c.id === formData.id ? formData : c));
+      toast.success('Curso actualizado correctamente.');
     } else {
       setCursos([...cursos, { ...formData, id: Date.now() }]);
+      toast.success('Nuevo curso agregado al catálogo.');
     }
     setMostrarFormulario(false);
   };
@@ -107,8 +113,6 @@ export default function GestionCursos() {
             <div style={{ ...inputGroupStyle, flex: 2 }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                 <label style={labelStyle}>Imagen del Curso *</label>
-                
-                {/* Botones para alternar el modo */}
                 <div style={{ display: 'flex', gap: '1rem', fontSize: '0.85rem' }}>
                   <label style={{ color: modoImagen === 'url' ? 'var(--primary-green)' : '#9ca3af', cursor: 'pointer' }}>
                     <input type="radio" checked={modoImagen === 'url'} onChange={() => setModoImagen('url')} style={{ display: 'none' }} />
@@ -120,13 +124,10 @@ export default function GestionCursos() {
                   </label>
                 </div>
               </div>
-
-              {/* Renderizado condicional del input */}
               {modoImagen === 'url' ? (
                 <input 
                   type="url" 
                   name="imagen" 
-                  // Si el valor actual es un archivo local (blob), mostramos el input vacío para no confundir
                   value={formData.imagen.startsWith('blob:') ? '' : formData.imagen} 
                   onChange={handleChange} 
                   style={inputStyle} 
@@ -164,13 +165,10 @@ export default function GestionCursos() {
       </header>
 
       <div style={{ backgroundColor: '#0a0a0a', borderRadius: '8px', border: '1px solid #333', overflow: 'hidden' }}>
-        
-        {/* Controles superiores de Paginación */}
         <div style={{ padding: '1rem', borderBottom: '1px solid #333', display: 'flex', justifyContent: 'space-between', alignItems: 'center', backgroundColor: 'rgba(255, 255, 255, 0.02)' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
             <span style={{ color: '#9ca3af', fontSize: '0.9rem' }}>Mostrar:</span>
             <select value={itemsPorPagina} onChange={handleCambioItems} style={{ ...inputStyle, padding: '0.4rem', width: 'auto' }}>
-              {/* Agregué el valor 2 solo para que puedas probar que funciona con los datos mock actuales */}
               <option value={2}>2</option>
               <option value={10}>10</option>
               <option value={15}>15</option>
@@ -192,7 +190,6 @@ export default function GestionCursos() {
             </thead>
             <tbody>
               {cursosPaginados.length > 0 ? (
-                // ACA USAMOS cursosPaginados EN LUGAR DEL ARREGLO COMPLETO
                 cursosPaginados.map((curso) => (
                   <tr key={curso.id} style={{ borderBottom: '1px solid #222' }}>
                     <td style={{ padding: '1rem', display: 'flex', alignItems: 'center', gap: '1rem' }}>
@@ -221,7 +218,6 @@ export default function GestionCursos() {
           </table>
         </div>
 
-        {/* Controles inferiores de Paginación (Botones Anterior / Siguiente) */}
         {totalPaginas > 0 && (
           <div style={{ padding: '1rem', borderTop: '1px solid #333', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
             <span style={{ color: '#9ca3af', fontSize: '0.9rem' }}>

@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useLocation } from 'react-router-dom';
+import { toast } from 'sonner';
 
 export default function Contacto() {
   const location = useLocation();
@@ -14,8 +15,6 @@ export default function Contacto() {
 
   // Estado para guardar los textos de error de cada campo
   const [errores, setErrores] = useState({});
-  // Estado para mostrar un mensaje de éxito al enviar
-  const [enviado, setEnviado] = useState(false);
 
   // Si llegamos a esta pantalla desde un curso, autocompletamos el asunto
   useEffect(() => {
@@ -71,17 +70,22 @@ export default function Contacto() {
 
   const handleSubmit = (e) => {
     e.preventDefault();
-    setEnviado(false); // Reiniciamos el estado de éxito por si está reenviando
     
     if (validarFormulario()) {
       console.log('Datos listos para enviar al backend:', formData);
-      setEnviado(true);
+      
+      // Acá disparamos la notificación de éxito
+      toast.success('¡Tu mensaje fue enviado con éxito!', {
+        description: 'Nos contactaremos pronto a tu correo.'
+      });
       
       // Limpiar el formulario
       setFormData({ nombre: '', correo: '', telefono: '', asunto: '', mensaje: '' });
-      
-      // Ocultar el cartel de éxito después de 5 segundos
-      setTimeout(() => setEnviado(false), 5000);
+    } else {
+      // Acá disparamos la notificación de error
+      toast.error('No se pudo enviar el mensaje', {
+        description: 'Por favor, revisá los campos marcados en rojo.'
+      });
     }
   };
 
@@ -105,13 +109,6 @@ export default function Contacto() {
           Dejanos tu consulta y te responderemos a la brevedad.
         </p>
       </header>
-
-      {/* Cartel flotante de éxito */}
-      {enviado && (
-        <div style={{ backgroundColor: 'rgba(16, 185, 129, 0.2)', color: 'var(--primary-green)', padding: '1rem', borderRadius: '8px', marginBottom: '2rem', textAlign: 'center', border: '1px solid var(--primary-green)' }}>
-          ¡Tu mensaje fue enviado con éxito! Nos contactaremos pronto.
-        </div>
-      )}
 
       {/* noValidate apaga los tooltips por defecto del navegador para usar los nuestros */}
       <form 

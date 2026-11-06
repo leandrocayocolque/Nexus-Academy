@@ -13,9 +13,23 @@ import GestionConsultas from './components/GestionConsultas';
 
 import { Toaster } from 'sonner';
 
-function App() {
+export default function App() {
   return (
     <>
+      {/* Contenedor global de notificaciones */}
+      <Toaster 
+        position="bottom-right" 
+        toastOptions={{
+          style: {
+            background: '#0a0a0a',
+            border: '1px solid var(--primary-green)',
+            color: 'var(--text-main)',
+            fontFamily: 'Consolas, monospace',
+            borderRadius: '4px'
+          },
+        }} 
+      />
+
       <Navbar />
       <main>
         <Routes>
@@ -34,31 +48,6 @@ function App() {
           </Route>
         </Routes>
       </main>
-    </>
-  );
-}
-
-export default function App() {
-  return (
-    <>
-      {/* Contenedor global de notificaciones */}
-      <Toaster 
-        position="bottom-right" 
-        toastOptions={{
-          style: {
-            background: '#0a0a0a',
-            border: '1px solid var(--primary-green)',
-            color: 'var(--text-main)',
-            fontFamily: 'Consolas, monospace',
-            borderRadius: '4px'
-          },
-        }} 
-      />
-      
-      {/* Acá sigue el resto de tu código actual (AppContainer, Navbar, Routes, etc.) */}
-      <div style={appContainerStyle}>
-         ...
-      </div>
     </>
   );
 }
