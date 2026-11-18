@@ -1,9 +1,26 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { cursosMock } from '../data/cursos';
 
 export default function Catalogo() {
   const navigate = useNavigate();
+  const [cursos, setCursos] = useState([]);
+  const [errorCursos, setErrorCursos] = useState('');
+
+  useEffect(() => {
+    async function cargarCursos() {
+      try {
+        const respuesta = await fetch(`${import.meta.env.VITE_API_URL}/cursos?limite=100`);
+        if (!respuesta.ok) throw new Error(`HTTP ${respuesta.status}`);
+
+        const { datos } = await respuesta.json();
+        setCursos(datos);
+      } catch {
+        setErrorCursos('No se pudo cargar el catálogo.');
+      }
+    }
+
+    cargarCursos();
+  }, []);
 
   // 1. Estados para los filtros
   const [busqueda, setBusqueda] = useState('');
@@ -38,9 +55,9 @@ export default function Catalogo() {
   };
 
   // 5. Lógica de filtrado dinámico
-  const cursosFiltrados = cursosMock.filter((curso) => {
+  const cursosFiltrados = cursos.filter((curso) => {
     const coincideBusqueda = curso.titulo.toLowerCase().includes(busqueda.toLowerCase()) || 
-                             curso.descripcion.toLowerCase().includes(busqueda.toLowerCase());
+                             (curso.descripcion ?? '').toLowerCase().includes(busqueda.toLowerCase());
     
     const coincideArea = filtrosArea.length === 0 || filtrosArea.includes(curso.categoria);
     const coincideTipo = filtrosTipo.length === 0 || filtrosTipo.includes(curso.tipo);
@@ -114,6 +131,7 @@ export default function Catalogo() {
 
       {/* Columna Derecha: Grilla de Cursos */}
       <main style={{ flex: 1, display: 'flex', flexDirection: 'column' }}>
+        {errorCursos && <p role="alert">{errorCursos}</p>}
         
         {/* Selector de cantidad por página */}
         <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: '1.5rem', alignItems: 'center', gap: '0.75rem' }}>
@@ -151,18 +169,20 @@ export default function Catalogo() {
                   onMouseOut={(e) => e.currentTarget.style.transform = 'translateY(0)'}
                 >
                   <div style={{ height: '200px', overflow: 'hidden' }}>
-                    <img 
-                      src={curso.imagen} 
-                      alt={curso.titulo} 
-                      style={{ width: '100%', height: '100%', objectFit: 'cover' }} 
-                    />
+                    {curso.imagenes?.[0]?.url && (
+                      <img
+                        src={curso.imagenes?.[0]?.url}
+                        alt={curso.titulo}
+                        style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+                      />
+                    )}
                   </div>
                   <div style={{ padding: '1.5rem', display: 'flex', flexDirection: 'column', flex: 1 }}>
                     <h3 style={{ color: 'var(--primary-green)', margin: '0 0 0.5rem 0', fontSize: '1.25rem' }}>
                       {curso.titulo}
                     </h3>
                     <p style={{ margin: '0 0 1rem 0', fontSize: '0.85rem', color: '#9ca3af' }}>
-                      {curso.tipo} • Área: {curso.categoria} • 🕒 {curso.duracion}
+                      {curso.tipo} • Área: {curso.categoria?.nombre} • 🕒 {curso.duracion}
                     </p>
                     <p style={{ fontSize: '0.95rem', lineHeight: '1.5', color: '#d1d5db', margin: '0 0 1.5rem 0', flex: 1 }}>
                       {curso.descripcion}
