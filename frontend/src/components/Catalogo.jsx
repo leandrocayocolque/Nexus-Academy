@@ -1,31 +1,41 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { academia, nivelesCurso, modalidadesCurso } from '../api/academia';
 
 export default function Catalogo() {
   const navigate = useNavigate();
   const [cursos, setCursos] = useState([]);
+  const [categorias, setCategorias] = useState([]);
   const [errorCursos, setErrorCursos] = useState('');
+  const [cargando, setCargando] = useState(true);
 
   useEffect(() => {
+    const controller = new AbortController();
+    let vigente = true;
     async function cargarCursos() {
       try {
-        const respuesta = await fetch(`${import.meta.env.VITE_API_URL}/cursos?limite=100`);
-        if (!respuesta.ok) throw new Error(`HTTP ${respuesta.status}`);
-
-        const { datos } = await respuesta.json();
+        const [datos, areas] = await Promise.all([
+          academia.cargarTodosCursos({ signal: controller.signal }),
+          academia.cargarTodasCategorias({ signal: controller.signal }),
+        ]);
+        if (!vigente) return;
         setCursos(datos);
-      } catch {
-        setErrorCursos('No se pudo cargar el catálogo.');
+        setCategorias(areas);
+      } catch (error) {
+        if (vigente && !controller.signal.aborted) {
+          setErrorCursos(`No se pudo cargar el catálogo. ${error.message}`);
+        }
+      } finally {
+        if (vigente) setCargando(false);
       }
     }
-
     cargarCursos();
+    return () => { vigente = false; controller.abort(); };
   }, []);
 
   // 1. Estados para los filtros
   const [busqueda, setBusqueda] = useState('');
   const [filtrosArea, setFiltrosArea] = useState([]);
-  const [filtrosTipo, setFiltrosTipo] = useState([]);
 
   // 2. Estados para la paginación
   const [paginaActual, setPaginaActual] = useState(1);
@@ -33,21 +43,13 @@ export default function Catalogo() {
 
   // 3. Funciones para manejar los checkboxes
   const handleAreaChange = (area) => {
+    setPaginaActual(1);
     setFiltrosArea((prev) => 
       prev.includes(area) ? prev.filter((a) => a !== area) : [...prev, area]
     );
   };
 
-  const handleTipoChange = (tipo) => {
-    setFiltrosTipo((prev) => 
-      prev.includes(tipo) ? prev.filter((t) => t !== tipo) : [...prev, tipo]
-    );
-  };
-
-  // 4. Resetear la página a 1 si el usuario usa un filtro o busca algo
-  useEffect(() => {
-    setPaginaActual(1);
-  }, [busqueda, filtrosArea, filtrosTipo]);
+  // Cada cambio de filtro vuelve a la primera página desde su evento.
 
   const handleCambioItems = (e) => {
     setItemsPorPagina(Number(e.target.value));
@@ -59,10 +61,8 @@ export default function Catalogo() {
     const coincideBusqueda = curso.titulo.toLowerCase().includes(busqueda.toLowerCase()) || 
                              (curso.descripcion ?? '').toLowerCase().includes(busqueda.toLowerCase());
     
-    const coincideArea = filtrosArea.length === 0 || filtrosArea.includes(curso.categoria);
-    const coincideTipo = filtrosTipo.length === 0 || filtrosTipo.includes(curso.tipo);
-    
-    return coincideBusqueda && coincideArea && coincideTipo;
+    const coincideArea = filtrosArea.length === 0 || filtrosArea.includes(curso.categoria.id);
+    return coincideBusqueda && coincideArea;
   });
 
   // 6. Lógica de Paginación (sobre los cursos ya filtrados)
@@ -83,7 +83,7 @@ export default function Catalogo() {
             type="text" 
             placeholder="Buscar curso..." 
             value={busqueda}
-            onChange={(e) => setBusqueda(e.target.value)}
+            onChange={(e) => { setBusqueda(e.target.value); setPaginaActual(1); }}
             style={{ 
               width: '100%', 
               padding: '0.75rem', 
@@ -102,35 +102,23 @@ export default function Catalogo() {
         
         <div style={{ marginBottom: '2rem' }}>
           <h4 style={{ color: '#d1d5db', marginBottom: '1rem' }}>Área</h4>
-          {['Tecnología', 'Negocios', 'Diseño y Comunicación'].map((area) => (
-            <label key={area} style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.75rem', cursor: 'pointer' }}>
+          {categorias.map((area) => (
+            <label key={area.id} style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.75rem', cursor: 'pointer' }}>
               <input 
                 type="checkbox" 
-                checked={filtrosArea.includes(area)}
-                onChange={() => handleAreaChange(area)}
+                checked={filtrosArea.includes(area.id)}
+                onChange={() => handleAreaChange(area.id)}
                 style={{ accentColor: 'var(--primary-green)' }} 
-              /> {area}
+              /> {area.nombre}
             </label>
           ))}
         </div>
 
-        <div>
-          <h4 style={{ color: '#d1d5db', marginBottom: '1rem' }}>Tipo</h4>
-          {['Curso', 'Programa Ejecutivo', 'Diplomatura', 'Programa Universitario'].map((tipo) => (
-            <label key={tipo} style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.75rem', cursor: 'pointer' }}>
-              <input 
-                type="checkbox" 
-                checked={filtrosTipo.includes(tipo)}
-                onChange={() => handleTipoChange(tipo)}
-                style={{ accentColor: 'var(--primary-green)' }} 
-              /> {tipo}
-            </label>
-          ))}
-        </div>
       </aside>
 
       {/* Columna Derecha: Grilla de Cursos */}
       <main style={{ flex: 1, display: 'flex', flexDirection: 'column' }}>
+        {cargando && <p role="status">Cargando catálogo...</p>}
         {errorCursos && <p role="alert">{errorCursos}</p>}
         
         {/* Selector de cantidad por página */}
@@ -148,7 +136,7 @@ export default function Catalogo() {
           </select>
         </div>
 
-        {cursosPaginados.length > 0 ? (
+        {!cargando && !errorCursos && (cursosPaginados.length > 0 ? (
           <>
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(320px, 1fr))', gap: '2rem', alignContent: 'start', flex: 1 }}>
               {cursosPaginados.map((curso) => (
@@ -172,7 +160,7 @@ export default function Catalogo() {
                     {curso.imagenes?.[0]?.url && (
                       <img
                         src={curso.imagenes?.[0]?.url}
-                        alt={curso.titulo}
+                        alt={curso.imagenes[0].textoAlternativo || curso.titulo}
                         style={{ width: '100%', height: '100%', objectFit: 'cover' }}
                       />
                     )}
@@ -182,7 +170,7 @@ export default function Catalogo() {
                       {curso.titulo}
                     </h3>
                     <p style={{ margin: '0 0 1rem 0', fontSize: '0.85rem', color: '#9ca3af' }}>
-                      {curso.tipo} • Área: {curso.categoria?.nombre} • 🕒 {curso.duracion}
+                      Área: {curso.categoria.nombre} • {nivelesCurso[curso.nivel]} • {modalidadesCurso[curso.modalidad]} • 🕒 {curso.duracion}
                     </p>
                     <p style={{ fontSize: '0.95rem', lineHeight: '1.5', color: '#d1d5db', margin: '0 0 1.5rem 0', flex: 1 }}>
                       {curso.descripcion}
@@ -231,9 +219,9 @@ export default function Catalogo() {
         ) : (
           <div style={{ textAlign: 'center', padding: '4rem', color: '#9ca3af', backgroundColor: 'var(--bg-card)', borderRadius: '8px', border: '1px dashed #4b5563' }}>
             <h3 style={{ fontSize: '1.5rem', color: 'var(--text-main)', margin: '0 0 1rem 0' }}>No encontramos cursos</h3>
-            <p style={{ margin: 0 }}>Intentá desmarcar algunos filtros o usar otros términos de búsqueda.</p>
+            <p style={{ margin: 0 }}>{cursos.length === 0 ? 'Por el momento no hay cursos disponibles.' : 'Intentá desmarcar algunos filtros o usar otros términos de búsqueda.'}</p>
           </div>
-        )}
+        ))}
       </main>
     </div>
   );

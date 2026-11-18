@@ -1,19 +1,35 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
-import { cursosMock } from '../data/cursos';
+import { academia, modalidadesCurso, nivelesCurso, formatearFechaInicio, asuntoConsultaCurso } from '../api/academia';
 
 export default function DetalleCurso() {
   const { id } = useParams();
   const navigate = useNavigate();
-  
-  // Buscamos el curso exacto convirtiendo el ID de la URL a número
-  const curso = cursosMock.find((c) => c.id === parseInt(id));
+  const [resultado, setResultado] = useState(null);
 
-  // Manejo de error si el usuario ingresa un ID que no existe
-  if (!curso) {
+  useEffect(() => {
+    const controller = new AbortController();
+    let vigente = true;
+    academia.obtenerCurso(id, { signal: controller.signal }).then(
+      (curso) => { if (vigente) setResultado({ id, curso }); },
+      (error) => {
+        if (vigente && !controller.signal.aborted) setResultado({ id, error });
+      },
+    );
+    return () => { vigente = false; controller.abort(); };
+  }, [id]);
+
+  const cargando = resultado?.id !== id;
+  const curso = cargando ? null : resultado.curso;
+  const error = cargando ? null : resultado.error;
+  if (cargando || error || !curso) {
     return (
       <div style={{ textAlign: 'center', padding: '5rem', color: 'var(--text-main)' }}>
-        <h2>Curso no encontrado</h2>
+        {cargando ? <p role="status">Cargando curso...</p> : error?.status === 404 ? (
+          <h2>Curso no encontrado</h2>
+        ) : (
+          <p role="alert">No se pudo cargar el curso. {error?.message || 'La respuesta del servidor no es válida.'}</p>
+        )}
         <button 
           onClick={() => navigate('/cursos')} 
           style={{ padding: '0.5rem 1rem', marginTop: '1rem', cursor: 'pointer', backgroundColor: 'var(--bg-card)', color: 'white', border: '1px solid #333' }}
@@ -45,15 +61,17 @@ export default function DetalleCurso() {
 
       <div style={{ display: 'flex', flexDirection: 'column', gap: '2rem', backgroundColor: 'var(--bg-card)', borderRadius: '12px', overflow: 'hidden', border: '1px solid #333' }}>
         
-        <div style={{ height: '400px', width: '100%' }}>
-          <img src={curso.imagen} alt={curso.titulo} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
-        </div>
+        {curso.imagenes?.[0]?.url && (
+          <div style={{ height: '400px', width: '100%' }}>
+            <img src={curso.imagenes[0].url} alt={curso.imagenes[0].textoAlternativo || curso.titulo} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+          </div>
+        )}
 
         <div style={{ padding: '3rem', display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
           
           <div style={{ display: 'flex', gap: '1rem', flexWrap: 'wrap' }}>
-            <span style={badgeStyle}>{curso.categoria}</span>
-            <span style={badgeStyle}>{curso.tipo}</span>
+            <span style={badgeStyle}>{curso.categoria.nombre}</span>
+            <span style={badgeStyle}>{nivelesCurso[curso.nivel]}</span>
             <span style={{ ...badgeStyle, backgroundColor: 'rgba(255,255,255,0.05)', color: '#d1d5db', border: '1px solid #333' }}>
               🕒 {curso.duracion}
             </span>
@@ -67,27 +85,31 @@ export default function DetalleCurso() {
             {curso.descripcion}
           </p>
 
-          {/* Información extra simulada visualmente */}
+          {/* Información publicada por la academia */}
           <div style={{ display: 'flex', gap: '4rem', marginTop: '2rem', padding: '2rem 0', borderTop: '1px solid #333', borderBottom: '1px solid #333', flexWrap: 'wrap' }}>
             <div>
               <h4 style={{ color: '#9ca3af', margin: '0 0 0.5rem 0', fontSize: '0.9rem', textTransform: 'uppercase' }}>Modalidad</h4>
-              <p style={{ color: 'var(--text-main)', margin: 0, fontWeight: 'bold', fontSize: '1.1rem' }}>Online Sincrónico</p>
+              <p style={{ color: 'var(--text-main)', margin: 0, fontWeight: 'bold', fontSize: '1.1rem' }}>{modalidadesCurso[curso.modalidad]}</p>
             </div>
             <div>
               <h4 style={{ color: '#9ca3af', margin: '0 0 0.5rem 0', fontSize: '0.9rem', textTransform: 'uppercase' }}>Disponibilidad</h4>
-              <p style={{ color: 'var(--primary-green)', margin: 0, fontWeight: 'bold', fontSize: '1.1rem' }}>Últimos 5 cupos</p>
+              <p style={{ color: 'var(--primary-green)', margin: 0, fontWeight: 'bold', fontSize: '1.1rem' }}>{curso.disponible ? `${curso.cuposDisponibles} cupos disponibles` : 'Sin disponibilidad'}</p>
             </div>
             <div>
               <h4 style={{ color: '#9ca3af', margin: '0 0 0.5rem 0', fontSize: '0.9rem', textTransform: 'uppercase' }}>Inicio</h4>
-              <p style={{ color: 'var(--text-main)', margin: 0, fontWeight: 'bold', fontSize: '1.1rem' }}>Próximo mes</p>
+              <p style={{ color: 'var(--text-main)', margin: 0, fontWeight: 'bold', fontSize: '1.1rem' }}>{formatearFechaInicio(curso.fechaInicio)}</p>
             </div>
           </div>
 
+          <p style={{ color: 'var(--text-main)', margin: 0, fontSize: '1.25rem' }}>
+            Precio: {new Intl.NumberFormat('es-AR', { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(Number(curso.precio))}
+          </p>
+
           <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: '1rem' }}>
-            {/* Se envía el título del curso por state para precompletar el formulario a futuro */}
+            {/* T2 utiliza el UUID y el asunto para contextualizar la consulta. */}
             <Link 
               to="/contacto"
-              state={{ asunto: `Consulta sobre el curso: ${curso.titulo}` }}
+              state={{ cursoId: curso.id, asunto: asuntoConsultaCurso(curso.titulo) }}
               style={{
                 padding: '1rem 2.5rem',
                 backgroundColor: 'var(--primary-green)',
