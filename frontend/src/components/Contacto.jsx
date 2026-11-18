@@ -1,6 +1,7 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useRef } from 'react';
 import { useLocation } from 'react-router-dom';
 import { toast } from 'sonner';
+import { academia, validarConsulta, contextoConsulta } from '../api/academia';
 
 export default function Contacto() {
   const location = useLocation();
@@ -9,19 +10,18 @@ export default function Contacto() {
     nombre: '',
     correo: '',
     telefono: '',
-    asunto: '',
+    asunto: null,
     mensaje: ''
   });
 
-  // Estado para guardar los textos de error de cada campo
   const [errores, setErrores] = useState({});
-
-  // Si llegamos a esta pantalla desde un curso, autocompletamos el asunto
-  useEffect(() => {
-    if (location.state && location.state.asunto) {
-      setFormData(prev => ({ ...prev, asunto: location.state.asunto }));
-    }
-  }, [location]);
+  const [pendiente, setPendiente] = useState(false);
+  const [errorEnvio, setErrorEnvio] = useState('');
+  const enviando = useRef(false);
+  const contexto = contextoConsulta(location.state);
+  // null indica un asunto sin editar: sigue la navegación sin efectos.
+  // Una edición (incluso vacía) siempre tiene prioridad sobre el contexto.
+  const asunto = formData.asunto ?? contexto.asunto;
 
   const handleChange = (e) => {
     setFormData({ 
@@ -35,57 +35,36 @@ export default function Contacto() {
     }
   };
 
-  const validarFormulario = () => {
-    const nuevosErrores = {};
-    
-    // Validación Nombre
-    if (!formData.nombre.trim()) {
-      nuevosErrores.nombre = 'El nombre es obligatorio.';
-    }
-    
-    // Validación Correo (vacío o formato inválido usando una expresión regular)
-    if (!formData.correo.trim()) {
-      nuevosErrores.correo = 'El correo electrónico es obligatorio.';
-    } else if (!/^\S+@\S+\.\S+$/.test(formData.correo)) {
-      nuevosErrores.correo = 'Por favor, ingresá un correo electrónico válido.';
-    }
-
-    // Validación Asunto
-    if (!formData.asunto.trim()) {
-      nuevosErrores.asunto = 'El asunto es obligatorio.';
-    }
-
-    // Validación Mensaje (vacío o menos de 10 caracteres)
-    if (!formData.mensaje.trim()) {
-      nuevosErrores.mensaje = 'El mensaje es obligatorio.';
-    } else if (formData.mensaje.trim().length < 10) {
-      nuevosErrores.mensaje = 'El mensaje debe tener al menos 10 caracteres.';
-    }
-
-    setErrores(nuevosErrores);
-    
-    // Si el objeto nuevosErrores está vacío, significa que pasó todas las pruebas
-    return Object.keys(nuevosErrores).length === 0;
-  };
-
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    
-    if (validarFormulario()) {
-      console.log('Datos listos para enviar al backend:', formData);
-      
-      // Acá disparamos la notificación de éxito
-      toast.success('¡Tu mensaje fue enviado con éxito!', {
-        description: 'Nos contactaremos pronto a tu correo.'
-      });
-      
-      // Limpiar el formulario
-      setFormData({ nombre: '', correo: '', telefono: '', asunto: '', mensaje: '' });
-    } else {
-      // Acá disparamos la notificación de error
+    if (enviando.current) return;
+    const datos = { ...formData, asunto, cursoId: contexto.cursoId };
+    const nuevosErrores = validarConsulta(datos);
+    setErrores(nuevosErrores);
+    setErrorEnvio('');
+    if (Object.keys(nuevosErrores).length) {
       toast.error('No se pudo enviar el mensaje', {
         description: 'Por favor, revisá los campos marcados en rojo.'
       });
+      return;
+    }
+
+    // El ref bloquea otro envío antes del siguiente render.
+    enviando.current = true;
+    setPendiente(true);
+    try {
+      await academia.crearConsulta(datos);
+      setFormData({ nombre: '', correo: '', telefono: '', asunto: '', mensaje: '' });
+      toast.success('¡Tu mensaje fue enviado con éxito!', {
+        description: 'Nos contactaremos pronto a tu correo.'
+      });
+    } catch (error) {
+      const mensaje = error.message || 'No se pudo enviar la consulta. Intentá nuevamente.';
+      setErrorEnvio(mensaje);
+      toast.error('No se pudo enviar el mensaje', { description: mensaje });
+    } finally {
+      enviando.current = false;
+      setPendiente(false);
     }
   };
 
@@ -112,7 +91,8 @@ export default function Contacto() {
 
       {/* noValidate apaga los tooltips por defecto del navegador para usar los nuestros */}
       <form 
-        onSubmit={handleSubmit} 
+        onSubmit={handleSubmit}
+        aria-busy={pendiente}
         noValidate
         style={{ 
           display: 'flex', 
@@ -132,7 +112,8 @@ export default function Contacto() {
           <input 
             type="text" 
             id="nombre" 
-            name="nombre" 
+            name="nombre"
+            disabled={pendiente}
             value={formData.nombre} 
             onChange={handleChange} 
             style={getStyleInput('nombre')}
@@ -146,7 +127,8 @@ export default function Contacto() {
           <input 
             type="email" 
             id="correo" 
-            name="correo" 
+            name="correo"
+            disabled={pendiente}
             value={formData.correo} 
             onChange={handleChange} 
             style={getStyleInput('correo')}
@@ -160,12 +142,16 @@ export default function Contacto() {
           <input 
             type="tel" 
             id="telefono" 
-            name="telefono" 
+            name="telefono"
+            disabled={pendiente}
             value={formData.telefono} 
             onChange={handleChange} 
             style={getStyleInput('telefono')}
           />
         </div>
+
+        {errores.telefono && <span role="alert" style={{ color: '#ef4444' }}>{errores.telefono}</span>}
+        {errores.cursoId && <p role="alert" style={{ color: '#ef4444' }}>{errores.cursoId}</p>}
 
         {/* Campo Asunto */}
         <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
@@ -173,8 +159,9 @@ export default function Contacto() {
           <input 
             type="text" 
             id="asunto" 
-            name="asunto" 
-            value={formData.asunto} 
+            name="asunto"
+            disabled={pendiente}
+            value={asunto}
             onChange={handleChange} 
             style={getStyleInput('asunto')}
           />
@@ -186,7 +173,8 @@ export default function Contacto() {
           <label htmlFor="mensaje" style={{ color: '#d1d5db', fontSize: '0.95rem' }}>Mensaje *</label>
           <textarea 
             id="mensaje" 
-            name="mensaje" 
+            name="mensaje"
+            disabled={pendiente}
             rows="5" 
             value={formData.mensaje} 
             onChange={handleChange} 
@@ -195,8 +183,11 @@ export default function Contacto() {
           {errores.mensaje && <span style={{ color: '#ef4444', fontSize: '0.85rem' }}>{errores.mensaje}</span>}
         </div>
 
-        <button 
-          type="submit" 
+        {errorEnvio && <p role="alert" style={{ color: '#ef4444' }}>{errorEnvio}</p>}
+        {pendiente && <p role="status">Enviando consulta...</p>}
+        <button
+          type="submit"
+          disabled={pendiente}
           style={{ 
             padding: '1rem', 
             backgroundColor: 'var(--primary-green)', 
@@ -212,7 +203,7 @@ export default function Contacto() {
           onMouseOver={(e) => e.target.style.backgroundColor = 'var(--hover-green)'}
           onMouseOut={(e) => e.target.style.backgroundColor = 'var(--primary-green)'}
         >
-          Enviar Mensaje
+          {pendiente ? 'Enviando...' : 'Enviar Mensaje'}
         </button>
       </form>
     </div>
