@@ -1,14 +1,15 @@
 import { Link, useNavigate, useLocation } from 'react-router-dom';
-import { useState } from 'react';
+import { useSesion } from '../auth/SesionContext.js';
 
 export default function Navbar() {
   const navigate = useNavigate();
   const location = useLocation(); // Nos permite saber en qué ruta estamos para iluminar el menú
   
-  const [isAdmin, setIsAdmin] = useState(false);
+  const { estado, logout } = useSesion();
+  const isAdmin = estado === 'autenticada';
 
   const handleLogout = () => {
-    setIsAdmin(false);
+    logout();
     navigate('/');
   };
 
@@ -69,7 +70,7 @@ export default function Navbar() {
             <li><Link to="/cursos" style={getLinkStyle('/cursos')}>Catálogo</Link></li>
             <li><Link to="/contacto" style={getLinkStyle('/contacto')}>Contacto</Link></li>
             <li>
-              <button onClick={() => setIsAdmin(true)} style={btnPrimaryStyle}>
+              <button onClick={() => navigate('/login')} style={btnPrimaryStyle}>
                 Admin Login
               </button>
             </li>

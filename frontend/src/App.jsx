@@ -12,10 +12,12 @@ import GestionCategorias from './components/GestionCategorias';
 import GestionConsultas from './components/GestionConsultas';
 
 import { Toaster } from 'sonner';
+import SesionProvider from './auth/SesionProvider';
+import Login from './components/Login';
 
 export default function App() {
   return (
-    <>
+    <SesionProvider>
       {/* Contenedor global de notificaciones */}
       <Toaster 
         position="bottom-right" 
@@ -38,6 +40,7 @@ export default function App() {
           <Route path="/cursos" element={<Catalogo />} />
           <Route path="/cursos/:id" element={<DetalleCurso />} />
           <Route path="/contacto" element={<Contacto />} />
+          <Route path="/login" element={<Login />} />
 
           {/* Rutas Privadas Anidadas (Todo lo que empiece con /admin pasa por AdminLayout) */}
           <Route path="/admin" element={<AdminLayout />}>
@@ -48,6 +51,6 @@ export default function App() {
           </Route>
         </Routes>
       </main>
-    </>
+    </SesionProvider>
   );
 }

@@ -1,8 +1,17 @@
 import React from 'react';
-import { Link, Outlet, useLocation } from 'react-router-dom';
+import { Link, Navigate, Outlet, useLocation } from 'react-router-dom';
+import { useSesion } from '../auth/SesionContext.js';
+import { destinoAdmin } from '../auth/sesion.js';
 
 export default function AdminLayout() {
   const location = useLocation();
+  const { estado } = useSesion();
+  if (estado === 'cargando') return <p role="status">Validando acceso…</p>;
+  if (estado !== 'autenticada') {
+    return <Navigate to="/login" replace state={{
+      desde: destinoAdmin(location.pathname + location.search + location.hash),
+    }} />;
+  }
 
   // Función para resaltar la pestaña activa en la barra lateral
   const getLinkStyle = (path) => ({
