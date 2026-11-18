@@ -1,49 +1,95 @@
-import React, { useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { toast } from 'sonner';
+import { useSesion } from '../auth/SesionContext';
+import { mutarYRecargar } from '../api/academia';
 
 export default function GestionConsultas() {
-  const [consultas, setConsultas] = useState([
-    { 
-      id: 1, 
-      nombre: 'Juan Pérez', 
-      correo: 'juan@example.com', 
-      asunto: 'Consulta sobre el curso: Data Mindset', 
-      mensaje: 'Quería saber si el curso requiere conocimientos previos de programación.', 
-      fecha: '01/11/2026', 
-      leido: false 
-    },
-    { 
-      id: 2, 
-      nombre: 'María Gómez', 
-      correo: 'maria@empresa.com', 
-      asunto: 'Capacitación para empresas', 
-      mensaje: 'Necesitamos capacitar a un equipo de 10 personas en Liderazgo Ágil.', 
-      fecha: '30/10/2026', 
-      leido: true 
+  const { academia } = useSesion();
+  const [consultas, setConsultas] = useState([]);
+  const [cargando, setCargando] = useState(true);
+  const [pendiente, setPendiente] = useState(false);
+  const [error, setError] = useState('');
+  const [intento, setIntento] = useState(0);
+  const vida = useRef(null);
+  const ocupado = useRef(false);
+
+  useEffect(() => {
+    const controller = new AbortController();
+    vida.current = controller;
+    academia.cargarTodasConsultasAdmin({ signal: controller.signal }).then(datos => {
+      if (!controller.signal.aborted) setConsultas(datos);
+    }).catch(fallo => {
+      if (!controller.signal.aborted) setError(`No se pudieron cargar las consultas. ${fallo.message}`);
+    }).finally(() => {
+      if (!controller.signal.aborted) setCargando(false);
+    });
+    return () => controller.abort();
+  }, [academia, intento]);
+
+  const recargar = () => {
+    setError('');
+    setCargando(true);
+    setIntento(i => i + 1);
+  };
+
+  const ejecutar = async (mutar, mensaje, alConfirmar) => {
+    const controller = vida.current;
+    if (ocupado.current || !controller || controller.signal.aborted) return;
+    ocupado.current = true;
+    setPendiente(true);
+    setError('');
+    try {
+      const { resultado, datos, errorActualizacion } = await mutarYRecargar(
+        () => mutar({ signal: controller.signal }),
+        () => academia.cargarTodasConsultasAdmin({ signal: controller.signal }),
+      );
+      if (controller.signal.aborted) return;
+      alConfirmar?.(resultado);
+      if (errorActualizacion) {
+        setError(`El cambio se confirmó, pero no se pudo actualizar la lista. ${errorActualizacion.message}`);
+        toast.warning('El cambio se confirmó. Actualizá la lista antes de continuar.');
+      } else {
+        setConsultas(datos);
+        // El modal también refleja el estado más reciente confirmado por la lista.
+        setMensajeActivo(actual => actual ? datos.find(c => c.id === actual.id) ?? null : null);
+        toast.success(mensaje);
+      }
+    } catch (fallo) {
+      if (!controller.signal.aborted) {
+        setError(fallo.message);
+        toast.error(fallo.message);
+      }
+    } finally {
+      if (!controller.signal.aborted) {
+        ocupado.current = false;
+        setPendiente(false);
+      }
     }
-  ]);
+  };
 
   // Estado para controlar la ventana flotante (Modal) del mensaje
   const [mensajeActivo, setMensajeActivo] = useState(null);
 
-  const handleMarcarLeido = (id) => {
-    setConsultas(consultas.map(consulta => 
-      consulta.id === id ? { ...consulta, leido: true } : consulta
-    ));
-    toast.success('Consulta marcada como leída.');
-  };
+  const handleMarcarLeido = (id) => ejecutar(
+    opciones => academia.marcarConsultaLeidaAdmin(id, opciones),
+    'Estado de la consulta actualizado.',
+    resultado => setMensajeActivo(actual => actual?.id === id ? resultado : actual),
+  );
 
   const handleEliminar = (id) => {
+    if (ocupado.current) return;
+    const controller = vida.current;
     toast('¿Eliminar mensaje?', {
       description: 'Esta acción no se puede deshacer.',
       action: {
         label: 'Eliminar',
         onClick: () => {
-          setConsultas(consultas.filter((c) => c.id !== id));
-          toast.success('Mensaje eliminado.');
-          if (mensajeActivo && mensajeActivo.id === id) {
-            setMensajeActivo(null);
-          }
+          if (controller !== vida.current || controller.signal.aborted) return;
+          return ejecutar(
+            opciones => academia.eliminarConsultaAdmin(id, opciones),
+            'Mensaje eliminado.',
+            () => setMensajeActivo(actual => actual?.id === id ? null : actual),
+          );
         }
       },
       cancel: { label: 'Cancelar' }
@@ -51,8 +97,9 @@ export default function GestionConsultas() {
   };
 
   const handleVerMensaje = (consulta) => {
+    if (ocupado.current) return;
     setMensajeActivo(consulta);
-    if (!consulta.leido) {
+    if (consulta.estado === 'PENDIENTE') {
       handleMarcarLeido(consulta.id);
     }
   };
@@ -68,6 +115,9 @@ export default function GestionConsultas() {
         <p style={{ color: '#9ca3af', marginTop: '0.5rem' }}>Administrá los mensajes recibidos desde el formulario de contacto público.</p>
       </header>
 
+      {error && <p role="alert">{error} <button disabled={pendiente} onClick={recargar}>Actualizar lista</button></p>}
+      {cargando && <p role="status">Cargando consultas...</p>}
+      {pendiente && <p role="status">Actualizando consulta...</p>}
       {/* TABLA PRINCIPAL DE CONSULTAS */}
       <div style={{ backgroundColor: '#0a0a0a', borderRadius: '8px', border: '1px solid #333', overflowX: 'auto' }}>
         <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left' }}>
@@ -87,34 +137,34 @@ export default function GestionConsultas() {
                   key={consulta.id} 
                   style={{ 
                     borderBottom: '1px solid #222', 
-                    backgroundColor: consulta.leido ? 'transparent' : 'rgba(16, 185, 129, 0.05)',
+                    backgroundColor: consulta.estado !== 'PENDIENTE' ? 'transparent' : 'rgba(16, 185, 129, 0.05)',
                     transition: 'background-color 0.2s' 
                   }} 
                   onMouseOver={(e) => e.currentTarget.style.backgroundColor = 'rgba(255,255,255,0.02)'} 
-                  onMouseOut={(e) => e.currentTarget.style.backgroundColor = consulta.leido ? 'transparent' : 'rgba(16, 185, 129, 0.05)'}
+                  onMouseOut={(e) => e.currentTarget.style.backgroundColor = consulta.estado !== 'PENDIENTE' ? 'transparent' : 'rgba(16, 185, 129, 0.05)'}
                 >
-                  <td style={{ padding: '1rem', color: '#9ca3af', fontSize: '0.9rem' }}>{consulta.fecha}</td>
+                  <td style={{ padding: '1rem', color: '#9ca3af', fontSize: '0.9rem' }}>{formatearFecha(consulta.creadaEn)}</td>
                   <td style={{ padding: '1rem' }}>
-                    <span style={{ color: 'var(--text-main)', fontWeight: consulta.leido ? 'normal' : 'bold', display: 'block' }}>
+                    <span style={{ color: 'var(--text-main)', fontWeight: consulta.estado !== 'PENDIENTE' ? 'normal' : 'bold', display: 'block' }}>
                       {consulta.nombre}
                     </span>
                     <span style={{ color: '#6b7280', fontSize: '0.85rem' }}>{consulta.correo}</span>
                   </td>
-                  <td style={{ padding: '1rem', color: '#d1d5db', fontWeight: consulta.leido ? 'normal' : 'bold' }}>
+                  <td style={{ padding: '1rem', color: '#d1d5db', fontWeight: consulta.estado !== 'PENDIENTE' ? 'normal' : 'bold' }}>
                     {consulta.asunto}
                   </td>
                   <td style={{ padding: '1rem', textAlign: 'center' }}>
-                    {consulta.leido ? (
-                      <span style={{ color: '#6b7280', fontSize: '0.85rem', border: '1px solid #4b5563', padding: '0.2rem 0.6rem', borderRadius: '999px' }}>Leído</span>
+                    {consulta.estado !== 'PENDIENTE' ? (
+                      <span style={{ color: '#6b7280', fontSize: '0.85rem', border: '1px solid #4b5563', padding: '0.2rem 0.6rem', borderRadius: '999px' }}>{consulta.estado === 'RESPONDIDA' ? 'Respondida' : 'Leído'}</span>
                     ) : (
                       <span style={{ color: 'var(--primary-green)', fontSize: '0.85rem', border: '1px solid var(--primary-green)', padding: '0.2rem 0.6rem', borderRadius: '999px', backgroundColor: 'rgba(16, 185, 129, 0.1)' }}>Nuevo</span>
                     )}
                   </td>
                   <td style={{ padding: '1rem', textAlign: 'right' }}>
-                    <button style={btnAccionStyle} onClick={() => handleVerMensaje(consulta)}>
+                    <button disabled={pendiente || cargando || !!error} style={btnAccionStyle} onClick={() => handleVerMensaje(consulta)}>
                       Leer
                     </button>
-                    <button style={btnEliminarStyle} onClick={() => handleEliminar(consulta.id)}>
+                    <button disabled={pendiente || cargando || !!error} style={btnEliminarStyle} onClick={() => handleEliminar(consulta.id)}>
                       Eliminar
                     </button>
                   </td>
@@ -123,7 +173,7 @@ export default function GestionConsultas() {
             ) : (
               <tr>
                 <td colSpan="5" style={{ padding: '3rem', textAlign: 'center', color: '#9ca3af' }}>
-                  No hay consultas en la bandeja.
+                  {cargando ? 'Cargando consultas...' : error ? 'No se pudo confirmar la bandeja de consultas.' : 'No hay consultas en la bandeja.'}
                 </td>
               </tr>
             )}
@@ -164,15 +214,18 @@ export default function GestionConsultas() {
                 <span style={{ color: 'var(--text-main)', fontWeight: 'bold', display: 'block' }}>{mensajeActivo.nombre}</span>
                 <span style={{ color: '#9ca3af', fontSize: '0.9rem' }}>{mensajeActivo.correo}</span>
               </div>
-              <span style={{ color: '#6b7280', fontSize: '0.9rem' }}>{mensajeActivo.fecha}</span>
+              <span style={{ color: '#6b7280', fontSize: '0.9rem' }}>{formatearFecha(mensajeActivo.creadaEn)}</span>
             </div>
 
+            {error && <p role="alert">{error}</p>}
+            {pendiente && <p role="status">Actualizando consulta...</p>}
+            <p style={{ color: '#9ca3af' }}>Estado: {mensajeActivo.estado === 'RESPONDIDA' ? 'Respondida' : mensajeActivo.estado === 'LEIDA' ? 'Leído' : 'Nuevo'}</p>
             <div style={{ backgroundColor: '#111', padding: '1.5rem', borderRadius: '4px', border: '1px solid #333', color: '#d1d5db', minHeight: '120px', whiteSpace: 'pre-wrap', lineHeight: '1.6' }}>
               {mensajeActivo.mensaje}
             </div>
             
             <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '1rem', marginTop: '2rem' }}>
-              <button onClick={() => handleEliminar(mensajeActivo.id)} style={btnEliminarStyle}>
+              <button disabled={pendiente || !!error} onClick={() => handleEliminar(mensajeActivo.id)} style={btnEliminarStyle}>
                 Eliminar Mensaje
               </button>
               <button onClick={cerrarModal} style={{ padding: '0.6rem 1.5rem', backgroundColor: 'var(--primary-green)', color: 'white', border: 'none', borderRadius: '4px', fontWeight: '600', cursor: 'pointer' }}>
@@ -184,6 +237,11 @@ export default function GestionConsultas() {
       )}
     </div>
   );
+}
+
+function formatearFecha(valor) {
+  const fecha = new Date(valor);
+  return valor && !Number.isNaN(fecha.getTime()) ? fecha.toLocaleDateString('es-AR') : 'Sin fecha';
 }
 
 const thStyle = {

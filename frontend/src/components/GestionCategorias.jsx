@@ -1,54 +1,113 @@
-import React, { useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { toast } from 'sonner';
+import { useSesion } from '../auth/SesionContext';
+import { mutarYRecargar } from '../api/academia';
 
 export default function GestionCategorias() {
-  const [categorias, setCategorias] = useState([
-    { id: 1, nombre: 'Tecnología', descripcion: 'Cursos vinculados a programación, software e IA.' },
-    { id: 2, nombre: 'Negocios', descripcion: 'Programas de management, finanzas y marketing.' },
-    { id: 3, nombre: 'Diseño y Comunicación', descripcion: 'Formación en UX/UI, diseño gráfico y audiovisual.' }
-  ]);
+  const { academia } = useSesion();
+  const [categorias, setCategorias] = useState([]);
+  const [cargando, setCargando] = useState(true);
+  const [pendiente, setPendiente] = useState(false);
+  const [error, setError] = useState('');
+  const [intento, setIntento] = useState(0);
+  const vida = useRef(null);
+  const ocupado = useRef(false);
+
+  useEffect(() => {
+    const controller = new AbortController();
+    vida.current = controller;
+    academia.cargarTodasCategoriasAdmin({ signal: controller.signal }).then(datos => {
+      if (!controller.signal.aborted) setCategorias(datos);
+    }).catch(fallo => {
+      if (!controller.signal.aborted) setError(`No se pudieron cargar las categorías. ${fallo.message}`);
+    }).finally(() => {
+      if (!controller.signal.aborted) setCargando(false);
+    });
+    return () => controller.abort();
+  }, [academia, intento]);
+
+  const recargar = () => {
+    setError('');
+    setCargando(true);
+    setIntento(i => i + 1);
+  };
+
+  const ejecutar = async (mutar, mensaje, alConfirmar) => {
+    const controller = vida.current;
+    if (ocupado.current || controller?.signal.aborted || !controller) return;
+    ocupado.current = true;
+    setPendiente(true);
+    setError('');
+    try {
+      const { datos, errorActualizacion } = await mutarYRecargar(
+        () => mutar({ signal: controller.signal }),
+        () => academia.cargarTodasCategoriasAdmin({ signal: controller.signal }),
+      );
+      if (controller.signal.aborted) return;
+      alConfirmar?.();
+      if (errorActualizacion) {
+        setError(`El cambio se guardó, pero no se pudo actualizar la lista. ${errorActualizacion.message}`);
+        toast.warning('El cambio se guardó. Actualizá la lista antes de continuar.');
+      } else {
+        setCategorias(datos);
+        toast.success(mensaje);
+      }
+    } catch (fallo) {
+      if (!controller.signal.aborted) {
+        setError(fallo.message);
+        toast.error(fallo.message);
+      }
+    } finally {
+      if (!controller.signal.aborted) {
+        ocupado.current = false;
+        setPendiente(false);
+      }
+    }
+  };
 
   // Estados del Formulario ABM
   const [mostrarFormulario, setMostrarFormulario] = useState(false);
-  const [formData, setFormData] = useState({ id: null, nombre: '', descripcion: '' });
+  const [formData, setFormData] = useState({ id: null, nombre: '', descripcion: '', activa: true });
 
   const handleNuevo = () => {
-    setFormData({ id: null, nombre: '', descripcion: '' });
+    if (ocupado.current) return;
+    setFormData({ id: null, nombre: '', descripcion: '', activa: true });
     setMostrarFormulario(true);
   };
 
   const handleEditar = (categoria) => {
-    setFormData(categoria);
+    if (ocupado.current) return;
+    setFormData({ ...categoria, descripcion: categoria.descripcion ?? '' });
     setMostrarFormulario(true);
   };
 
   const handleEliminar = (id) => {
+    if (ocupado.current) return;
+    const controller = vida.current;
     toast('¿Eliminar categoría?', {
       description: 'Esto podría afectar a los cursos vinculados.',
       action: {
         label: 'Eliminar',
         onClick: () => {
-          setCategorias(categorias.filter((cat) => cat.id !== id));
-          toast.success('Categoría eliminada.');
+          if (controller !== vida.current || controller.signal.aborted) return;
+          return ejecutar(opciones => academia.eliminarCategoriaAdmin(id, opciones), 'Categoría eliminada.');
         }
       },
       cancel: { label: 'Cancelar' }
     });
   };
 
-  const handleChange = (e) => setFormData({ ...formData, [e.target.name]: e.target.value });
+  const handleChange = (e) => setFormData({ ...formData, [e.target.name]: e.target.type === 'checkbox' ? e.target.checked : e.target.value });
 
   const handleSubmit = (e) => {
     e.preventDefault();
-    if (formData.id) {
-      setCategorias(categorias.map(c => c.id === formData.id ? formData : c));
-      toast.success('Categoría actualizada correctamente.');
-    } else {
-      const nuevoId = categorias.length > 0 ? Math.max(...categorias.map(c => c.id)) + 1 : 1;
-      setCategorias([...categorias, { ...formData, id: nuevoId }]);
-      toast.success('Nueva categoría creada.');
-    }
-    setMostrarFormulario(false);
+    ejecutar(
+      opciones => formData.id
+        ? academia.actualizarCategoriaAdmin(formData.id, formData, opciones)
+        : academia.crearCategoriaAdmin(formData, opciones),
+      formData.id ? 'Categoría actualizada correctamente.' : 'Nueva categoría creada.',
+      () => setMostrarFormulario(false),
+    );
   };
 
   // --- RENDERIZADO DEL FORMULARIO ---
@@ -60,21 +119,24 @@ export default function GestionCategorias() {
             {formData.id ? 'Editar Categoría' : 'Nueva Categoría'}
           </h2>
         </header>
+        {error && <p role="alert">{error}</p>}
+        {pendiente && <p role="status">Guardando cambios...</p>}
         <form onSubmit={handleSubmit} style={{ backgroundColor: '#0a0a0a', padding: '2rem', borderRadius: '8px', border: '1px solid #333', display: 'flex', flexDirection: 'column', gap: '1.5rem', maxWidth: '600px' }}>
           
           <div style={inputGroupStyle}>
             <label style={labelStyle}>Nombre de la Categoría *</label>
-            <input required type="text" name="nombre" value={formData.nombre} onChange={handleChange} style={inputStyle} />
+            <input disabled={pendiente} required minLength={2} maxLength={120} type="text" name="nombre" value={formData.nombre} onChange={handleChange} style={inputStyle} />
           </div>
           
           <div style={inputGroupStyle}>
-            <label style={labelStyle}>Descripción breve *</label>
-            <textarea required name="descripcion" value={formData.descripcion} onChange={handleChange} style={{ ...inputStyle, resize: 'vertical', minHeight: '100px' }}></textarea>
+            <label style={labelStyle}>Descripción breve</label>
+            <textarea disabled={pendiente} maxLength={1000} name="descripcion" value={formData.descripcion} onChange={handleChange} style={{ ...inputStyle, resize: 'vertical', minHeight: '100px' }}></textarea>
           </div>
           
+          <label style={labelStyle}><input type="checkbox" name="activa" checked={formData.activa} disabled={pendiente} onChange={handleChange} /> Categoría activa</label>
           <div style={{ display: 'flex', gap: '1rem', justifyContent: 'flex-end', marginTop: '1rem' }}>
-            <button type="button" onClick={() => setMostrarFormulario(false)} style={btnCancelarStyle}>Cancelar</button>
-            <button type="submit" style={btnGuardarStyle}>Guardar Categoría</button>
+            <button disabled={pendiente} type="button" onClick={() => setMostrarFormulario(false)} style={btnCancelarStyle}>Cancelar</button>
+            <button disabled={pendiente} type="submit" style={btnGuardarStyle}>Guardar Categoría</button>
           </div>
         </form>
       </div>
@@ -86,11 +148,14 @@ export default function GestionCategorias() {
     <div>
       <header style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '2rem' }}>
         <h2 style={{ margin: 0, color: 'var(--text-main)', fontSize: '2rem' }}>Gestión de Categorías</h2>
-        <button style={btnGuardarStyle} onClick={handleNuevo}>
+        <button disabled={pendiente || cargando || !!error} style={btnGuardarStyle} onClick={handleNuevo}>
           + Nueva Categoría
         </button>
       </header>
 
+      {error && <p role="alert">{error} <button disabled={pendiente} onClick={recargar}>Actualizar lista</button></p>}
+      {pendiente && <p role="status">Guardando cambios...</p>}
+      {cargando && <p role="status">Cargando categorías...</p>}
       <div style={{ backgroundColor: '#0a0a0a', borderRadius: '8px', border: '1px solid #333', overflowX: 'auto' }}>
         <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left' }}>
           <thead>
@@ -107,16 +172,16 @@ export default function GestionCategorias() {
                 <tr key={categoria.id} style={{ borderBottom: '1px solid #222', transition: 'background-color 0.2s' }} onMouseOver={(e) => e.currentTarget.style.backgroundColor = 'rgba(255,255,255,0.02)'} onMouseOut={(e) => e.currentTarget.style.backgroundColor = 'transparent'}>
                   <td style={{ padding: '1rem', color: '#6b7280' }}>#{categoria.id}</td>
                   <td style={{ padding: '1rem', color: 'var(--text-main)', fontWeight: '600' }}>
-                    {categoria.nombre}
+                    {categoria.nombre}{!categoria.activa && ' (Inactiva)'}
                   </td>
                   <td style={{ padding: '1rem', color: '#9ca3af', fontSize: '0.9rem' }}>
                     {categoria.descripcion}
                   </td>
                   <td style={{ ...tdStyle, textAlign: 'right', whiteSpace: 'nowrap' }}>
-                    <button style={btnEditarStyle} onClick={() => handleEditar(categoria)}>
+                    <button disabled={pendiente || cargando || !!error} style={btnEditarStyle} onClick={() => handleEditar(categoria)}>
                       Editar
                     </button>
-                    <button style={btnEliminarStyle} onClick={() => handleEliminar(categoria.id)}>
+                    <button disabled={pendiente || cargando || !!error} style={btnEliminarStyle} onClick={() => handleEliminar(categoria.id)}>
                       Eliminar
                     </button>
                   </td>
@@ -125,7 +190,7 @@ export default function GestionCategorias() {
             ) : (
               <tr>
                 <td colSpan="4" style={{ padding: '3rem', textAlign: 'center', color: '#9ca3af' }}>
-                  No hay categorías registradas.
+                  {cargando ? 'Cargando categorías...' : error ? 'No se pudo confirmar la lista de categorías.' : 'No hay categorías registradas.'}
                 </td>
               </tr>
             )}

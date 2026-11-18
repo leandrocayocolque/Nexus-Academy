@@ -1,28 +1,25 @@
-import React from 'react';
-import { cursosMock } from '../data/cursos';
+import React, { useEffect, useState } from 'react';
+import { useSesion } from '../auth/SesionContext';
 
 export default function Dashboard() {
-  // 1. IMPORTACIÓN DE DATOS
-  // Usamos tus cursos simulados. Para categorías y consultas, definimos una pequeña 
-  // base temporal acá para replicar la lógica hasta que conectemos con el backend.
-  const categoriasMock = [
-    { id: 1, nombre: 'Tecnología' },
-    { id: 2, nombre: 'Negocios' },
-    { id: 3, nombre: 'Diseño y Comunicación' }
-  ];
+  const { academia } = useSesion();
+  const [resumen, setResumen] = useState(null);
+  const [error, setError] = useState('');
+  const [intento, setIntento] = useState(0);
 
-  const consultasMock = [
-    { id: 1, asunto: 'Consulta 1', leido: false }, // Nuevo
-    { id: 2, asunto: 'Consulta 2', leido: true },  // Leído
-    { id: 3, asunto: 'Consulta 3', leido: false }  // Nuevo
-  ];
+  useEffect(() => {
+    const controller = new AbortController();
+    academia.obtenerResumenAdmin({ signal: controller.signal }).then(datos => {
+      if (!controller.signal.aborted) setResumen(datos);
+    }).catch(fallo => {
+      if (!controller.signal.aborted) setError(fallo.message);
+    });
+    return () => controller.abort();
+  }, [academia, intento]);
 
-  // 2. LÓGICA DINÁMICA (Cálculos)
-  const totalCursos = cursosMock.length;
-  const totalCategorias = categoriasMock.length;
-  
-  // Filtramos el arreglo de consultas para contar solamente las que tienen leido: false
-  const consultasPendientes = consultasMock.filter(consulta => consulta.leido === false).length;
+  if (error) return <div role="alert">No se pudo cargar el resumen. {error} <button onClick={() => { setError(''); setResumen(null); setIntento(i => i + 1); }}>Reintentar</button></div>;
+  if (!resumen) return <p role="status">Cargando resumen...</p>;
+  const { cursosActivos: totalCursos, categoriasActivas: totalCategorias, consultasPendientes } = resumen;
 
   return (
     <div>
@@ -38,7 +35,7 @@ export default function Dashboard() {
 
         {/* Tarjeta de Categorías */}
         <div style={cardStyle}>
-          <h4 style={cardTitleStyle}>Categorías</h4>
+          <h4 style={cardTitleStyle}>Categorías Activas</h4>
           <p style={cardValueStyle}>{totalCategorias}</p>
         </div>
 
