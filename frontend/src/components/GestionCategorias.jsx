@@ -111,7 +111,6 @@ export default function GestionCategorias() {
     );
   };
 
-  // --- RENDERIZADO DEL FORMULARIO ---
   if (mostrarFormulario) {
     return (
       <div>
@@ -144,7 +143,6 @@ export default function GestionCategorias() {
     );
   }
 
-  // --- RENDERIZADO DE LA TABLA ---
   return (
     <div>
       <header className="admin-page-header">
@@ -218,7 +216,6 @@ export default function GestionCategorias() {
   );
 }
 
-// Estilos
 const thStyle = { padding: 'var(--space-3)', color: 'var(--text-secondary)', fontWeight: '600', fontSize: '0.8rem', textTransform: 'uppercase', letterSpacing: '0.5px' };
 const inputGroupStyle = { display: 'flex', flexDirection: 'column', gap: '0.5rem' };
 const labelStyle = { color: 'var(--text-secondary)', fontSize: '0.95rem' };

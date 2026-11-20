@@ -27,7 +27,6 @@ export default function App() {
   return (
     <SesionProvider>
       <NegocioProvider>
-        {/* Contenedor global de notificaciones */}
         <Toaster
           theme="dark"
           position="bottom-right"
@@ -56,7 +55,7 @@ export default function App() {
             <Route path="/recuperar-contrasena" element={<RecuperarContrasena />} />
             <Route path="/restablecer-contrasena" element={<RestablecerContrasena />} />
 
-            {/* Rutas Privadas Anidadas (Todo lo que empiece con /admin pasa por AdminLayout) */}
+            {/* Rutas Privadas */}
             <Route path="/admin" element={<AdminLayout />}>
               <Route index element={<Dashboard />} /> {/* Ruta por defecto: /admin */}
               <Route path="cursos" element={<GestionCursos />} /> {/* /admin/cursos */}

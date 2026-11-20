@@ -72,7 +72,6 @@ export default function Contacto() {
     }
   };
 
-  // Función auxiliar para aplicar el borde rojo si hay un error
   const getStyleInput = (nombreCampo) => ({
     borderColor: errores[nombreCampo] ? 'var(--status-error)' : 'var(--border-control)'
   });
@@ -95,7 +94,6 @@ export default function Contacto() {
       </header>
 
       <div style={{ display: 'flex', flexWrap: 'wrap', gap: '2rem', alignItems: 'flex-start', justifyContent: 'center' }}>
-        {/* Tarjeta de Información del Comercio */}
         {hayInfoNegocio && (
           <aside className="public-contact-info">
             <h3 style={{ margin: 0, color: 'var(--primary-green)', fontSize: '1.35rem' }}>
@@ -175,7 +173,6 @@ export default function Contacto() {
           aria-busy={pendiente}
           noValidate
         >
-          {/* Campo Nombre */}
           <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
             <label htmlFor="nombre" style={{ color: '#d1d5db', fontSize: '0.95rem' }}>Nombre completo *</label>
             <input
@@ -190,7 +187,6 @@ export default function Contacto() {
             {errores.nombre && <span style={{ color: '#ef4444', fontSize: '0.85rem' }}>{errores.nombre}</span>}
           </div>
 
-          {/* Campo Correo */}
           <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
             <label htmlFor="correo" style={{ color: '#d1d5db', fontSize: '0.95rem' }}>Correo electrónico *</label>
             <input
@@ -205,7 +201,6 @@ export default function Contacto() {
             {errores.correo && <span style={{ color: '#ef4444', fontSize: '0.85rem' }}>{errores.correo}</span>}
           </div>
 
-          {/* Campo Teléfono (Sin validación obligatoria) */}
           <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
             <label htmlFor="telefono" style={{ color: '#d1d5db', fontSize: '0.95rem' }}>Teléfono (opcional)</label>
             <input
@@ -222,7 +217,6 @@ export default function Contacto() {
           {errores.telefono && <span role="alert" style={{ color: '#ef4444' }}>{errores.telefono}</span>}
           {errores.cursoId && <p role="alert" style={{ color: '#ef4444' }}>{errores.cursoId}</p>}
 
-          {/* Campo Asunto */}
           <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
             <label htmlFor="asunto" style={{ color: '#d1d5db', fontSize: '0.95rem' }}>Asunto *</label>
             <input
@@ -237,7 +231,6 @@ export default function Contacto() {
             {errores.asunto && <span style={{ color: '#ef4444', fontSize: '0.85rem' }}>{errores.asunto}</span>}
           </div>
 
-          {/* Campo Mensaje */}
           <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
             <label htmlFor="mensaje" style={{ color: '#d1d5db', fontSize: '0.95rem' }}>Mensaje *</label>
             <textarea

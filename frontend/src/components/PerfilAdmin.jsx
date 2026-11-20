@@ -6,7 +6,6 @@ import { datosPerfil } from '../auth/registro.js';
 export default function PerfilAdmin() {
   const { usuario, solicitar, actualizarUsuario } = useSesion();
 
-  // Estado formulario datos personales
   const [datos, setDatos] = useState({
     nombre: usuario?.nombre || '',
     apellido: usuario?.apellido || '',
@@ -15,7 +14,6 @@ export default function PerfilAdmin() {
   });
   const [guardandoDatos, setGuardandoDatos] = useState(false);
 
-  // Estado formulario cambio de contraseña
   const [claves, setClaves] = useState({
     contrasenaActual: '',
     contrasenaNueva: '',
@@ -83,7 +81,6 @@ export default function PerfilAdmin() {
       </header>
 
       <div style={{ display: 'grid', gap: '2rem', maxWidth: '700px' }}>
-        {/* Bloque 1: Datos Personales */}
         <form onSubmit={handleGuardarDatos} className="admin-section-card">
           <h3 style={{ marginTop: 0, color: 'var(--primary-green)' }}>Datos Personales</h3>
 
@@ -140,7 +137,6 @@ export default function PerfilAdmin() {
           </div>
         </form>
 
-        {/* Bloque 2: Seguridad / Contraseña */}
         <form onSubmit={handleCambiarClave} className="admin-section-card">
           <h3 style={{ marginTop: 0, color: 'var(--primary-green)' }}>Cambiar Contraseña</h3>
           <p style={{ color: '#9ca3af', fontSize: '0.85rem', margin: 0 }}>

@@ -17,7 +17,6 @@ export default function Navbar() {
     navigate('/');
   };
 
-  // Función auxiliar para aplicar estilos dinámicos a los enlaces según la ruta actual
   const getLinkStyle = (path) => ({
     color: location.pathname === path ? 'var(--text-main)' : '#9ca3af',
     textDecoration: 'none',
@@ -30,10 +29,10 @@ export default function Navbar() {
       display: 'flex', 
       justifyContent: 'space-between', 
       alignItems: 'center',
-      backgroundColor: 'rgba(10, 10, 10, 0.75)', // Fondo oscuro con transparencia
-      backdropFilter: 'blur(12px)', // Desenfoque estilo cristal
+      backgroundColor: 'rgba(10, 10, 10, 0.75)', 
+      backdropFilter: 'blur(12px)', 
       borderBottom: '1px solid rgba(255, 255, 255, 0.05)',
-      zIndex: 100 // Asegura que siempre esté por encima del resto del contenido
+      zIndex: 100 
     }}>
       <div>
         <Link to="/" style={{ textDecoration: 'none' }}>
@@ -55,7 +54,7 @@ export default function Navbar() {
       
       <ul className={isAdmin ? 'admin-navbar-links' : 'public-navbar-links'} style={{ display: 'flex', listStyle: 'none', margin: 0, alignItems: 'center' }}>
         {isAdmin ? (
-          // --- ENLACES DEL PANEL DE ADMINISTRACIÓN ---
+          // ENLACES DEL PANEL DE ADMINISTRACIÓN
           <>
             <li><Link to="/admin" style={getLinkStyle('/admin')}>Dashboard</Link></li>
             <li><Link to="/admin/cursos" style={getLinkStyle('/admin/cursos')}>Cursos</Link></li>
@@ -71,7 +70,7 @@ export default function Navbar() {
             </li>
           </>
         ) : (
-          // --- ENLACES DEL SITIO PÚBLICO ---
+          // ENLACES DEL SITIO PÚBLICO 
           <>
             <li><Link to="/" aria-current={location.pathname === '/' ? 'page' : undefined}>Inicio</Link></li>
             <li><Link to="/cursos" aria-current={location.pathname === '/cursos' ? 'page' : undefined}>Catálogo</Link></li>
@@ -88,7 +87,6 @@ export default function Navbar() {
   );
 }
 
-// Estilos extraídos para mantener el HTML más limpio
 const btnPrimaryStyle = {
   padding: '0.5rem 1.25rem',
   backgroundColor: 'rgba(16, 185, 129, 0.1)',

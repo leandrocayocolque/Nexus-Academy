@@ -14,7 +14,6 @@ export default function AdminLayout() {
     }} />;
   }
 
-  // Función para resaltar la pestaña activa en la barra lateral
   const linkActivo = (path) => location.pathname === path ||
     (path !== '/admin' && location.pathname.startsWith(path + '/'));
   const enlaces = [
@@ -31,7 +30,6 @@ export default function AdminLayout() {
   return (
     <div className="admin-shell">
       
-      {/* Barra Lateral (Sidebar) */}
       <aside className="admin-sidebar">
         <h3 className="admin-sidebar-title">Panel de gestión</h3>
         <nav aria-label="Gestión de la academia">
@@ -44,7 +42,6 @@ export default function AdminLayout() {
         </nav>
       </aside>
 
-      {/* Área de Contenido Dinámico */}
       <main className="admin-content">
         <Outlet />
       </main>

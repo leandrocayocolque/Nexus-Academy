@@ -38,12 +38,10 @@ body {
   font-family: var(--font-body);
 }
 
-/* Inherit typography without imposing layout on administration controls. */
 :where(button, input, select, textarea) {
   font: inherit;
 }
 
-/* Subtle image emphasis without moving the editorial composition. */
 .img-hover-effect {
   border-radius: var(--radius-card);
   overflow: hidden;
@@ -62,7 +60,6 @@ body {
   filter: brightness(1.06);
 }
 
-/* Retain the existing list reset used by the administration sidebar. */
 ul {
   list-style: none;
   padding: 0;

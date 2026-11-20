@@ -34,15 +34,12 @@ export default function Catalogo() {
     return () => { vigente = false; controller.abort(); };
   }, []);
 
-  // 1. Estados para los filtros
   const [busqueda, setBusqueda] = useState('');
   const [filtrosArea, setFiltrosArea] = useState([]);
 
-  // 2. Estados para la paginación
   const [paginaActual, setPaginaActual] = useState(1);
-  const [itemsPorPagina, setItemsPorPagina] = useState(6); // 6 es buen número para grillas
+  const [itemsPorPagina, setItemsPorPagina] = useState(6); 
 
-  // 3. Funciones para manejar los checkboxes
   const handleAreaChange = (area) => {
     setPaginaActual(1);
     setFiltrosArea((prev) => 
@@ -57,7 +54,7 @@ export default function Catalogo() {
     setPaginaActual(1);
   };
 
-  // 5. Lógica de filtrado dinámico
+
   const cursosFiltrados = cursos.filter((curso) => {
     const coincideBusqueda = curso.titulo.toLowerCase().includes(busqueda.toLowerCase()) || 
                              (curso.descripcion ?? '').toLowerCase().includes(busqueda.toLowerCase());
@@ -66,7 +63,6 @@ export default function Catalogo() {
     return coincideBusqueda && coincideArea;
   });
 
-  // 6. Lógica de Paginación (sobre los cursos ya filtrados)
   const indiceUltimoCurso = paginaActual * itemsPorPagina;
   const indicePrimerCurso = indiceUltimoCurso - itemsPorPagina;
   const cursosPaginados = cursosFiltrados.slice(indicePrimerCurso, indiceUltimoCurso);
@@ -76,7 +72,6 @@ export default function Catalogo() {
   return (
     <div className="public-catalogue">
       
-      {/* Columna Izquierda: Buscador y Filtros */}
       <aside className="public-catalogue-filters">
         
         <div style={{ marginBottom: '2rem' }}>
@@ -110,12 +105,10 @@ export default function Catalogo() {
 
       </aside>
 
-      {/* Columna Derecha: Grilla de Cursos */}
       <main className="public-catalogue-results" style={{ display: 'flex', flexDirection: 'column' }}>
         {cargando && <p role="status">Cargando catálogo...</p>}
         {errorCursos && <p role="alert">{errorCursos}</p>}
         
-        {/* Selector de cantidad por página */}
         <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: '1.5rem', alignItems: 'center', gap: '0.75rem' }}>
           <span style={{ color: '#9ca3af', fontSize: '0.9rem' }}>Mostrar:</span>
           <select 
@@ -170,7 +163,6 @@ export default function Catalogo() {
               ))}
             </div>
 
-            {/* Controles de Paginación al pie de la grilla */}
             {totalPaginas > 1 && (
               <div className="public-pagination" style={{ marginTop: '3rem', paddingTop: '1.5rem', borderTop: '1px solid #333', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                 <span style={{ color: '#9ca3af', fontSize: '0.9rem' }}>

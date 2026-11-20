@@ -14,10 +14,8 @@ export default function Inicio() {
   return (
     <div className="public-home">
       
-      {/* SECCIÓN 1: HERO (Basado en la cabecera centrada con botones duales) */}
       <section className="public-home-hero" style={{
         textAlign: 'center',
-        // Un degradado sutil verde de fondo para simular el efecto de la primera imagen
         background: 'radial-gradient(circle at top, rgba(16, 185, 129, 0.15), var(--bg-dark) 50%)'
       }}>
         <h1 className="public-home-title" style={{
@@ -43,7 +41,6 @@ export default function Inicio() {
       <SeccionPublica tipo="promociones" />
       <SeccionPublica tipo="destacados" />
 
-      {/* SECCIÓN 2: FRANJA DE DATOS (Reemplazando los logos de empresas) */}
       <section className="public-home-stats">
         <span>+10,000 ALUMNOS</span>
         <span>50+ CURSOS</span>
@@ -51,7 +48,6 @@ export default function Inicio() {
         <span>APRENDIZAJE PRÁCTICO</span>
       </section>
 
-      {/* SECCIÓN 3: TEXTO TACHADO (Basado en el diseño dividido) */}
       <section className="public-home-intro" style={{ display: 'flex', flexWrap: 'wrap', maxWidth: '1200px', margin: '0 auto' }}>
         <div style={{ flex: '1 1 400px' }}>
           <h2 className="public-home-intro-title" style={{ fontFamily: 'Georgia, serif', margin: 0, lineHeight: '1.1' }}>
@@ -68,7 +64,6 @@ export default function Inicio() {
         </div>
       </section>
 
-      {/* SECCIÓN 4: CARACTERÍSTICAS Y VISUALES (Texto a la izq, recuadros dinámicos a la der) */}
       <section className="public-home-features" style={{ maxWidth: '1200px', margin: '0 auto' }}>
         <h2 className="public-home-features-title" style={{ fontFamily: 'Georgia, serif', textAlign: 'center' }}>
           Reflejá tu aprendizaje con trabajo real
@@ -88,12 +83,10 @@ export default function Inicio() {
             </h3>
           </div>
 
-          {/* Grilla de imágenes con el efecto hover que armamos antes */}
           <div className="public-home-images" style={{ flex: '1.5 1 400px', display: 'grid' }}>
             <div className="img-hover-effect public-home-image">
               <img src="https://images.unsplash.com/photo-1522071820081-009f0129c71c?w=600&q=80" alt="Alumnos trabajando en equipo" />
             </div>
-            {/* Le agrego un "translateY" para que la segunda imagen baje un poco y rompa la simetría, dando un look más moderno */}
             <div className="img-hover-effect public-home-image public-home-image-offset">
               <img src="https://images.unsplash.com/photo-1517245386807-bb43f82c33c4?w=600&q=80" alt="Desarrollo y tecnología" />
             </div>

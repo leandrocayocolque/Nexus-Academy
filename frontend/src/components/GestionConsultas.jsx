@@ -187,7 +187,6 @@ export default function GestionConsultas() {
         </table>
       </div>
 
-      {/* VENTANA MODAL PARA LEER EL MENSAJE COMPLETO */}
       {mensajeActivo && (
         <div className="admin-modal-overlay">
           <div className="admin-message-panel">

@@ -109,7 +109,6 @@ export default function ConfiguracionNegocio() {
       </header>
 
       <form onSubmit={handleSubmit} style={{ display: 'grid', gap: '2rem', maxWidth: '800px' }}>
-        {/* Bloque 1: Identidad y Descripción */}
         <section className="admin-section-card">
           <h3 style={{ margin: 0, color: 'var(--primary-green)' }}>Identidad del Comercio</h3>
 
@@ -138,7 +137,6 @@ export default function ConfiguracionNegocio() {
           </div>
         </section>
 
-        {/* Bloque 2: Datos de Contacto */}
         <section className="admin-section-card">
           <h3 style={{ margin: 0, color: 'var(--primary-green)' }}>Ubicación y Contacto</h3>
 
@@ -180,7 +178,6 @@ export default function ConfiguracionNegocio() {
           </div>
         </section>
 
-        {/* Bloque 3: Horarios de Atención */}
         <section className="admin-section-card">
           <div className="admin-section-heading">
             <h3 style={{ margin: 0, color: 'var(--primary-green)' }}>Horarios de Atención</h3>
@@ -230,7 +227,6 @@ export default function ConfiguracionNegocio() {
           )}
         </section>
 
-        {/* Bloque 4: Redes Sociales */}
         <section className="admin-section-card">
           <div className="admin-section-heading">
             <h3 style={{ margin: 0, color: 'var(--primary-green)' }}>Redes Sociales</h3>

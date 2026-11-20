@@ -714,7 +714,6 @@
 }
 
 @media (max-width: 900px) {
-  /* Let tall, enlarged navigation scroll away rather than cover focused content. */
   .public-navbar {
     position: static;
   }
@@ -784,7 +783,6 @@
     animation: none;
   }
 
-  /* Existing pointer handlers set an inline transform; keep reduced motion authoritative. */
   .public-course-card {
     transform: none !important;
   }

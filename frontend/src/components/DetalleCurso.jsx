@@ -122,7 +122,6 @@ export default function DetalleCurso() {
             <p className="public-detail-price">
               <span>Precio:</span> {new Intl.NumberFormat('es-AR', { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(Number(curso.precio))}
             </p>
-            {/* T2 utiliza el UUID y el asunto para contextualizar la consulta. */}
             <Link
               className="public-detail-inquiry public-button public-button-primary"
               to="/contacto"

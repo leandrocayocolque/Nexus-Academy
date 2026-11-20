@@ -7,7 +7,6 @@
   border: 0;
 }
 
-/* Admin navigation rules retained independently from the public navbar. */
 .admin-navbar,
 .admin-navbar * {
   box-sizing: border-box;
@@ -396,7 +395,6 @@
   overflow-wrap: anywhere;
 }
 
-/* Flex-child min-width keeps wide data tables inside their own scroll area. */
 .admin-table-scroll {
   min-width: 0;
   max-width: 100%;
@@ -445,7 +443,6 @@
   margin-block: 0.2rem;
 }
 
-/* Categories reserve room for references and actions without compressing prose. */
 .admin-table-scroll .admin-categories-table {
   width: 100%;
   min-width: 52rem;
@@ -641,7 +638,6 @@
   line-height: 1.7;
 }
 
-/* Shared by login, recovery and both reset-link states; no public form rules. */
 .admin-login {
   width: calc(100% - 2rem);
   max-width: 460px;
@@ -780,7 +776,6 @@
   white-space: pre-wrap;
 }
 
-/* Stack the shell at tablet widths rather than compressing CRUD content. */
 @media (max-width: 1024px) {
   .admin-shell {
     flex-direction: column;
@@ -804,7 +799,6 @@
 }
 
 @media (max-width: 900px) {
-  /* Keep the full brand and menu in flow when enlarged navigation becomes tall. */
   .admin-navbar {
     position: static;
   }
