@@ -1,54 +1,4 @@
-/* Public layouts only: keep the administration shell and forms unchanged. */
-.public-home-publications {
-  max-width: 1200px;
-  margin: 0 auto;
-  padding: 2rem clamp(1rem, 4vw, 3rem);
-}
-
-.public-home-publication-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(min(100%, 280px), 1fr));
-  gap: 1.5rem;
-}
-
-.public-home-publication-card {
-  padding: 1.5rem;
-  border: 1px solid #333;
-  border-radius: 12px;
-  background: var(--bg-card);
-}
-
-.public-home-publication-text {
-  white-space: pre-wrap;
-}
-
-.public-home-discount,
-.public-home-publications a {
-  color: var(--primary-green);
-}
-
-.public-home-publications a,
-.public-home-publications button {
-  display: inline-flex;
-  align-items: center;
-  min-height: 44px;
-}
-
-.public-home-publications button {
-  padding: 0.5rem 1rem;
-  border: 1px solid var(--primary-green);
-  border-radius: 6px;
-  background: var(--bg-card);
-  color: var(--text-main);
-  font: inherit;
-  cursor: pointer;
-}
-
-.public-home-publications a:focus-visible,
-.public-home-publications button:focus-visible {
-  outline: 2px solid var(--primary-green);
-  outline-offset: 3px;
-}
+/* Public layouts only: administration keeps its own responsive rules. */
 .public-navbar,
 .public-catalogue,
 .public-home,
@@ -58,6 +8,7 @@
   box-sizing: border-box;
   min-width: 0;
   overflow-wrap: anywhere;
+  line-height: 1.6;
 }
 
 .public-navbar *,
@@ -69,15 +20,115 @@
   min-width: 0;
 }
 
+:where(.public-navbar, .public-catalogue, .public-home, .public-contact, .public-detail, .public-detail-status) :where(a, button, input, select, textarea):focus-visible {
+  outline: var(--focus-ring);
+  outline-offset: 4px;
+}
+
+:where(.public-navbar, .public-catalogue, .public-home, .public-contact, .public-detail, .public-detail-status) :where(a, button, input, select, textarea) {
+  transition: color var(--transition-control), background-color var(--transition-control), border-color var(--transition-control), box-shadow var(--transition-control);
+}
+
+:where(.public-catalogue, .public-home, .public-contact, .public-detail, .public-detail-status) [role='status'],
+.public-home-publications > p {
+  padding: var(--space-3) var(--space-4);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-control);
+  background: var(--bg-card);
+  color: var(--text-secondary);
+}
+
+:where(.public-catalogue, .public-home, .public-contact, .public-detail-status) [role='alert'] {
+  padding: var(--space-3) var(--space-4);
+  border: 1px solid #784044;
+  border-radius: var(--radius-control);
+  background: var(--status-error-bg);
+  color: var(--status-error);
+}
+
+.public-button {
+  display: inline-flex;
+  justify-content: center;
+  align-items: center;
+  gap: var(--space-1);
+  min-height: 46px;
+  padding: 0.7rem 1.4rem;
+  border: 1px solid transparent;
+  border-radius: var(--radius-pill);
+  font: inherit;
+  font-weight: 600;
+  line-height: 1.4;
+  text-align: center;
+  text-decoration: none;
+  cursor: pointer;
+}
+
+.public-button-primary {
+  background: var(--primary-green);
+  color: var(--text-on-primary);
+}
+
+.public-button-primary:hover,
+.public-button-primary:focus-visible {
+  background: var(--hover-green);
+}
+
+.public-button-light {
+  background: var(--text-main);
+  color: var(--bg-dark);
+}
+
+.public-button-light:hover {
+  background: #d1fae5;
+}
+
+.public-button-outline {
+  background: transparent;
+  border-color: var(--border-control);
+  color: var(--text-main);
+}
+
+.public-button-outline:hover {
+  border-color: var(--primary-green);
+  background: var(--status-success-bg);
+}
+
+.public-button:disabled,
+.public-contact-form :disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.public-control,
+.public-contact-form input,
+.public-contact-form textarea {
+  min-height: 46px;
+  padding: 0.75rem 0.9rem;
+  border: 1px solid var(--border-control);
+  border-radius: var(--radius-control);
+  background: var(--bg-input);
+  color: var(--text-main);
+  font: inherit;
+}
+
+.public-control::placeholder,
+.public-contact-form input::placeholder,
+.public-contact-form textarea::placeholder {
+  color: var(--text-muted);
+  opacity: 1;
+}
+
 .public-navbar {
-  padding: 1.25rem clamp(1rem, 4vw, 4rem);
+  position: sticky;
+  top: 0;
+  padding: 1rem max(1rem, calc((100vw - 1280px) / 2));
   flex-wrap: wrap;
   gap: 1rem 2rem;
 }
 
 .public-navbar-links {
   flex-wrap: wrap;
-  gap: 0.75rem 2.5rem;
+  gap: 0.75rem 2rem;
 }
 
 .public-navbar-links a,
@@ -85,45 +136,20 @@
   display: inline-flex;
   align-items: center;
   min-height: 44px;
+  font-size: 0.95rem;
 }
 
-.public-navbar a:focus-visible,
-.public-navbar button:focus-visible,
-.public-contact-form input:focus-visible,
-.public-contact-form textarea:focus-visible {
-  outline: 2px solid var(--primary-green) !important;
-  outline-offset: 3px;
+.public-navbar-links a {
+  border-bottom: 2px solid transparent;
+  color: var(--text-muted);
+  text-decoration: none;
+  font-weight: 500;
 }
 
-.public-catalogue {
-  display: flex;
-  gap: 3rem;
-  padding: 2rem;
-  max-width: 1400px;
-  margin: 0 auto;
-}
-
-.public-catalogue-filters {
-  flex: 0 0 250px;
-}
-
-.public-catalogue-results {
-  flex: 1;
-}
-
-.public-course-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(min(100%, 320px), 1fr));
-  gap: 2rem;
-}
-
-.public-pagination {
-  flex-wrap: wrap;
-  gap: 1rem;
-}
-
-.public-catalogue-empty {
-  padding: clamp(1.5rem, 5vw, 4rem);
+.public-navbar-links a:hover,
+.public-navbar-links a[aria-current='page'] {
+  border-bottom-color: var(--primary-green);
+  color: var(--text-main);
 }
 
 .public-home-hero {
@@ -131,11 +157,150 @@
 }
 
 .public-home-title {
+  max-width: 1000px;
+  margin: 0 auto var(--space-4);
   font-size: clamp(2.5rem, 6vw, 4.5rem);
+  line-height: 1.12;
+  text-wrap: balance;
+}
+
+.public-home-description {
+  white-space: pre-line;
 }
 
 .public-home-actions {
   flex-wrap: wrap;
+}
+
+.public-home-publications {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 2rem clamp(1rem, 4vw, 3rem);
+}
+
+.public-home-publications > h2 {
+  margin: 0 0 var(--space-4);
+  font-family: var(--font-heading);
+  font-size: clamp(1.75rem, 3vw, 2.25rem);
+  font-weight: 500;
+  line-height: 1.25;
+}
+
+.public-home-publication-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 280px), 1fr));
+  gap: var(--space-4);
+}
+
+.public-home-publication-card,
+.public-course-card,
+.public-detail-card,
+.public-contact-form,
+.public-contact-info {
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-card);
+  background: var(--bg-card);
+  box-shadow: var(--shadow-card);
+}
+
+.public-home-publication-card {
+  display: flex;
+  flex-direction: column;
+  padding: var(--space-4);
+  color: var(--text-secondary);
+}
+
+.public-home-course-cover {
+  height: clamp(180px, 24vw, 240px);
+  margin-bottom: var(--space-4);
+  overflow: hidden;
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-control);
+  background: var(--bg-input);
+}
+
+.public-home-course-cover img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  transition: opacity 180ms ease;
+}
+
+.public-home-publication-card:hover .public-home-course-cover img,
+.public-home-publication-card:focus-within .public-home-course-cover img {
+  opacity: 0.88;
+}
+
+.public-home-publication-card h3 {
+  margin: 0 0 var(--space-1);
+  color: var(--text-main);
+  font-size: 1.3rem;
+  line-height: 1.35;
+}
+
+.public-home-publication-card p {
+  margin: var(--space-1) 0;
+}
+
+.public-home-publication-text {
+  white-space: pre-wrap;
+}
+
+.public-home-discount,
+.public-home-publications a {
+  color: var(--primary-green);
+}
+
+.public-home-discount {
+  font-weight: 600;
+}
+
+.public-home-publications a,
+.public-home-publications button {
+  display: inline-flex;
+  align-items: center;
+  min-height: 44px;
+}
+
+.public-home-publication-card a {
+  margin-top: auto;
+  padding-top: var(--space-3);
+  text-underline-offset: 4px;
+}
+
+.public-home-publications a:hover {
+  color: #6ee7b7;
+}
+
+.public-home-publications button {
+  padding: 0.5rem 1rem;
+  border: 1px solid var(--border-control);
+  border-radius: var(--radius-control);
+  background: var(--bg-card);
+  color: var(--text-main);
+  font: inherit;
+  cursor: pointer;
+}
+
+.public-home-publications button:hover {
+  border-color: var(--primary-green);
+  background: var(--bg-raised);
+}
+
+.public-home-stats {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-evenly;
+  gap: var(--space-5);
+  margin-top: var(--space-5);
+  padding: var(--space-5) clamp(1rem, 4vw, 3rem);
+  border-block: 1px solid var(--border-subtle);
+  color: var(--text-muted);
+  font-size: 0.9rem;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-align: center;
 }
 
 .public-home-intro {
@@ -146,6 +311,7 @@
 .public-home-intro-title,
 .public-detail-title {
   font-size: clamp(2.25rem, 5vw, 3.5rem);
+  text-wrap: balance;
 }
 
 .public-home-features {
@@ -155,6 +321,7 @@
 .public-home-features-title {
   font-size: clamp(2rem, 4vw, 3rem);
   margin: 0 0 clamp(2rem, 5vw, 5rem);
+  line-height: 1.2;
 }
 
 .public-home-feature-columns {
@@ -163,102 +330,406 @@
 
 .public-home-images {
   grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 1.5rem;
+  gap: var(--space-4);
 }
 
 .public-home-image {
   height: 300px;
+  border: 1px solid var(--border-subtle);
+  box-shadow: var(--shadow-card);
 }
 
 .public-home-image-offset {
   transform: translateY(3rem);
 }
 
+.public-catalogue {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--space-6);
+  padding: clamp(1.5rem, 4vw, 3rem) 2rem;
+  max-width: 1400px;
+  margin: 0 auto;
+}
+
+.public-catalogue-filters {
+  flex: 0 0 250px;
+  padding: var(--space-4);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-card);
+  background: var(--bg-card);
+}
+
+.public-catalogue-filters .public-control {
+  width: 100%;
+}
+
+.public-catalogue-filters h3 {
+  margin-top: 0;
+}
+
+.public-catalogue-filters label {
+  min-height: 36px;
+  color: var(--text-secondary);
+}
+
+.public-catalogue-filters input[type='checkbox'] {
+  width: 18px;
+  height: 18px;
+  flex-shrink: 0;
+}
+
+.public-catalogue-results {
+  flex: 1;
+}
+
+.public-course-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(min(100%, 320px), 1fr));
+  gap: var(--space-5);
+}
+
+.public-course-card {
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  cursor: pointer;
+  transition: transform var(--transition-control), border-color var(--transition-control), box-shadow var(--transition-control);
+}
+
+.public-course-card:hover,
+.public-course-card:focus-within {
+  border-color: var(--border-control);
+  box-shadow: 0 16px 36px rgba(0, 0, 0, 0.28);
+}
+
+.public-course-image {
+  height: 200px;
+  overflow: hidden;
+  border-bottom: 1px solid var(--border-subtle);
+  background: var(--bg-input);
+}
+
+.public-course-image-placeholder {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+  padding: var(--space-3);
+  color: var(--text-muted);
+  font-size: 0.9rem;
+  text-align: center;
+}
+
+.public-course-content {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  padding: var(--space-4);
+}
+
+.public-course-title {
+  margin: 0 0 var(--space-2);
+  color: var(--text-main);
+  font-family: var(--font-heading);
+  font-size: 1.5rem;
+  font-weight: 500;
+  line-height: 1.3;
+}
+
+.public-course-meta {
+  margin: 0 0 var(--space-3);
+  color: var(--text-muted);
+  font-size: 0.9rem;
+  line-height: 1.7;
+}
+
+.public-course-summary {
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 4;
+  max-height: 6em;
+  overflow: hidden;
+  margin: 0 0 var(--space-4);
+  color: var(--text-secondary);
+  font-size: 0.95rem;
+  line-height: 1.5;
+}
+
+.public-course-content > .public-button {
+  margin-top: auto;
+}
+
+.public-pagination {
+  flex-wrap: wrap;
+  gap: var(--space-3);
+}
+
+.public-pagination button {
+  min-height: 44px;
+  transition: background-color var(--transition-control);
+}
+
+.public-pagination button:not(:disabled):hover {
+  background: var(--bg-raised);
+}
+
+.public-catalogue-empty {
+  padding: clamp(1.5rem, 5vw, 4rem);
+  line-height: 1.7;
+}
+
 .public-contact {
-  padding: 3rem clamp(1rem, 4vw, 2rem);
+  padding: 3rem clamp(1rem, 4vw, 2rem) 5rem;
+}
+
+.public-contact-title {
+  margin: 0 0 var(--space-2);
+  font-family: var(--font-heading);
+  font-size: clamp(2.25rem, 5vw, 3rem);
+  font-weight: 500;
+  line-height: 1.2;
+}
+
+.public-contact-info {
+  display: flex;
+  flex: 1 1 320px;
+  flex-direction: column;
+  gap: var(--space-4);
+  max-width: 400px;
+  padding: clamp(1.25rem, 3vw, 2rem);
+}
+
+.public-contact-info > div + div {
+  padding-top: var(--space-4);
+  border-top: 1px solid var(--border-subtle);
+}
+
+.public-contact-info a:hover {
+  text-decoration: underline;
+  text-underline-offset: 4px;
 }
 
 .public-contact-form {
+  display: flex;
+  flex: 2 1 420px;
+  flex-direction: column;
+  gap: var(--space-4);
+  max-width: 600px;
   padding: clamp(1rem, 4vw, 2.5rem);
 }
 
 .public-contact-form input,
 .public-contact-form textarea {
   width: 100%;
-  font: inherit;
+}
+
+.public-contact-form textarea {
+  line-height: 1.6;
 }
 
 .public-detail {
-  padding: clamp(1rem, 4vw, 2rem);
+  padding: clamp(1rem, 4vw, 2rem) clamp(1rem, 4vw, 2rem) 5rem;
 }
 
 .public-detail-status {
+  max-width: 900px;
+  margin: 0 auto;
   padding: clamp(2rem, 6vw, 5rem) 1rem;
 }
 
-.public-detail-image {
-  height: clamp(200px, 40vw, 400px);
+.public-detail-card {
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
 }
 
-.public-gallery-status {
-  padding: 0 1rem;
-  color: #d1d5db;
+.public-detail-heading {
+  padding: clamp(1.25rem, 4vw, 3rem);
+  background: linear-gradient(120deg, rgba(16, 185, 129, 0.08), transparent);
+}
+
+.public-detail-badges {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+  margin-bottom: var(--space-4);
+}
+
+.public-detail-title {
+  margin: 0;
+  color: var(--text-main);
+  font-family: var(--font-heading);
+  font-weight: 500;
+  line-height: 1.15;
+}
+
+.public-detail-availability {
+  margin: var(--space-4) 0 0;
+  color: var(--text-secondary);
+  font-weight: 600;
+}
+
+.public-detail-availability.is-available {
+  color: var(--primary-green);
+}
+
+.public-detail-gallery {
+  margin-inline: clamp(1rem, 4vw, 3rem);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-control);
+  background: var(--bg-dark);
+}
+
+.public-detail-image {
+  height: clamp(220px, 40vw, 400px);
+  padding: var(--space-2);
+  background: var(--bg-input);
+  border-bottom: 1px solid var(--border-subtle);
+  border-radius: var(--radius-control) var(--radius-control) 0 0;
+}
+
+.public-detail-image img {
+  display: block;
+}
+
+.public-detail .public-gallery-status {
+  margin: var(--space-3);
+  padding: var(--space-1) var(--space-3);
+  font-size: 0.9rem;
 }
 
 .public-gallery-thumbnails {
   display: flex;
   flex-wrap: wrap;
-  gap: 0.75rem;
-  padding: 0 1rem 1rem;
+  gap: var(--space-2);
+  padding: 0 var(--space-3) var(--space-3);
 }
 
 .public-gallery-thumbnails button {
   width: 80px;
   min-height: 60px;
   padding: 3px;
-  border: 2px solid #666;
-  border-radius: 6px;
-  background: var(--bg-card);
+  border: 2px solid var(--border-control);
+  border-radius: var(--radius-control);
+  background: var(--bg-input);
   cursor: pointer;
 }
 
+.public-gallery-thumbnails button:hover,
 .public-gallery-thumbnails button[aria-pressed='true'] {
   border-color: var(--primary-green);
-}
-
-.public-gallery-thumbnails button:focus-visible {
-  outline: 2px solid white;
-  outline-offset: 3px;
 }
 
 .public-gallery-thumbnails img {
   display: block;
   width: 100%;
   height: 50px;
-  object-fit: cover;
+  border-radius: 3px;
+  object-fit: contain;
+  transition: opacity 180ms ease;
+}
+
+.public-gallery-thumbnails button:hover img,
+.public-gallery-thumbnails button:focus-visible img {
+  opacity: 0.8;
 }
 
 .public-detail-content {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-5);
   padding: clamp(1rem, 4vw, 3rem);
 }
 
+.public-detail-section-title {
+  margin: 0 0 var(--space-3);
+  font-family: var(--font-heading);
+  font-size: 1.65rem;
+  font-weight: 500;
+  color: var(--text-main);
+}
+
+.public-detail-description {
+  max-width: 70ch;
+  margin: 0;
+  color: var(--text-secondary);
+  font-size: 1.1rem;
+  line-height: 1.8;
+  white-space: pre-wrap;
+}
+
 .public-detail-facts {
-  gap: 1.5rem 4rem;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 180px), 1fr));
+  gap: var(--space-4);
+  margin: 0;
+  padding-block: var(--space-5);
+  border-block: 1px solid var(--border-subtle);
+}
+
+.public-detail-facts dt {
+  margin-bottom: var(--space-1);
+  color: var(--text-muted);
+  font-size: 0.85rem;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.public-detail-facts dd {
+  margin: 0;
+  color: var(--text-main);
+  font-weight: 600;
+}
+
+.public-detail-contact {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-4);
+  padding: clamp(1rem, 3vw, 1.5rem);
+  border: 1px solid var(--border-control);
+  border-radius: var(--radius-control);
+  background: var(--bg-input);
+}
+
+.public-detail-price {
+  margin: 0;
+  font-size: clamp(1.25rem, 3vw, 1.75rem);
+  font-weight: 600;
+  color: var(--text-main);
+}
+
+.public-detail-price span {
+  display: block;
+  color: var(--text-muted);
+  font-size: 0.9rem;
+  font-weight: 400;
 }
 
 .public-detail-inquiry {
   max-width: 100%;
-  text-align: center;
+  padding: 1rem 2rem;
 }
 
 @media (max-width: 900px) {
+  /* Let tall, enlarged navigation scroll away rather than cover focused content. */
+  .public-navbar {
+    position: static;
+  }
+
   .public-catalogue {
     flex-direction: column;
-    gap: 1.5rem;
+    gap: var(--space-4);
   }
 
   .public-catalogue-filters {
     flex: auto;
+    width: 100%;
+  }
+
+  .public-catalogue-results {
     width: 100%;
   }
 }
@@ -274,16 +745,20 @@
     gap: 0.25rem 0.75rem;
   }
 
+  .public-navbar-links button {
+    padding-inline: 1rem;
+  }
+
   .public-catalogue {
     padding: 1.5rem 1rem;
   }
 
   .public-course-grid {
-    gap: 1.5rem;
+    gap: var(--space-4);
   }
 
   .public-home-images {
-    gap: 0.75rem;
+    gap: var(--space-2);
   }
 
   .public-home-image {
@@ -296,5 +771,21 @@
 
   .public-detail-inquiry {
     width: 100%;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  :where(.public-navbar, .public-catalogue, .public-home, .public-contact, .public-detail, .public-detail-status) *,
+  .public-course-card,
+  .public-pagination button,
+  .public-home-course-cover img,
+  .public-gallery-thumbnails img {
+    transition: none;
+    animation: none;
+  }
+
+  /* Existing pointer handlers set an inline transform; keep reduced motion authoritative. */
+  .public-course-card {
+    transform: none !important;
   }
 }

@@ -330,7 +330,7 @@ export default function GestionCursos() {
       {cargando && <p role="status">Cargando cursos y categorías...</p>}
       {pendiente && <p role="status">Guardando cambios...</p>}
       <div style={{ ...panelStyle, maxWidth: 'none', padding: 0, overflow: 'hidden' }}>
-        <label style={{ ...labelStyle, padding: '1rem' }}>Mostrar: <select value={itemsPorPagina} onChange={e => { setItemsPorPagina(Number(e.target.value)); setPaginaActual(1); }} style={inputStyle}>
+        <label className="admin-table-limit" style={labelStyle}>Mostrar: <select value={itemsPorPagina} onChange={e => { setItemsPorPagina(Number(e.target.value)); setPaginaActual(1); }} style={inputStyle}>
           {[2, 10, 15, 20].map(n => <option key={n} value={n}>{n}</option>)}
         </select> cursos</label>
         <div className="admin-table-scroll" role="region" aria-label="Lista de cursos" tabIndex={0}>
@@ -344,7 +344,7 @@ export default function GestionCursos() {
                 </td>
                 <td style={tdStyle}>{categorias.find(c => c.id === curso.categoriaId)?.nombre ?? curso.categoria?.nombre ?? 'Sin categoría disponible'}</td>
                 <td style={tdStyle}>{curso.activo ? 'Activo' : 'Inactivo'}{curso.destacado && ' · Destacado'}</td>
-                <td style={tdStyle}>
+                <td className="admin-table-actions" style={tdStyle}>
                   <button disabled={bloqueado} onClick={() => abrir(curso)} style={btnEditarStyle}>Editar</button>
                   <button disabled={bloqueado} onClick={() => handleEliminar(curso.id)} style={btnEliminarStyle}>Eliminar</button>
                 </td>
@@ -365,14 +365,14 @@ export default function GestionCursos() {
   );
 }
 
-const panelStyle = { backgroundColor: '#0a0a0a', borderRadius: '8px', border: '1px solid #333', display: 'flex', flexDirection: 'column', gap: '1.5rem', maxWidth: '800px' };
-const thStyle = { padding: '1rem', color: '#d1d5db', fontWeight: '600', fontSize: '0.9rem', textTransform: 'uppercase' };
-const tdStyle = { padding: '1rem', color: '#9ca3af' };
+const panelStyle = { backgroundColor: 'var(--bg-dark)', borderRadius: 'var(--radius-card)', border: '1px solid var(--border-subtle)', display: 'flex', flexDirection: 'column', gap: 'var(--space-4)', maxWidth: '800px' };
+const thStyle = { padding: 'var(--space-3)', color: 'var(--text-secondary)', fontWeight: '600', fontSize: '0.8rem', textTransform: 'uppercase' };
+const tdStyle = { padding: 'var(--space-3)', color: 'var(--text-secondary)' };
 const inputGroupStyle = { display: 'flex', flexDirection: 'column', gap: '0.5rem' };
-const labelStyle = { color: '#d1d5db', fontSize: '0.95rem' };
-const inputStyle = { padding: '0.75rem', borderRadius: '4px', border: '1px solid #4b5563', backgroundColor: '#111', color: 'var(--text-main)', outline: 'none' };
+const labelStyle = { color: 'var(--text-secondary)', fontSize: '0.95rem' };
+const inputStyle = { padding: 'var(--space-2)', borderRadius: 'var(--radius-control)', border: '1px solid var(--border-control)', backgroundColor: 'var(--bg-input)', color: 'var(--text-main)' };
 const imagenStyle = { width: '140px', height: '90px', borderRadius: '4px', objectFit: 'cover' };
-const btnGuardarStyle = { padding: '0.75rem 1.5rem', backgroundColor: 'var(--primary-green)', color: 'white', border: 'none', borderRadius: '4px', fontWeight: '600', cursor: 'pointer' };
-const btnCancelarStyle = { padding: '0.75rem 1.5rem', backgroundColor: 'transparent', color: '#d1d5db', border: '1px solid #4b5563', borderRadius: '4px', fontWeight: '600', cursor: 'pointer' };
-const btnEditarStyle = { padding: '0.4rem 0.8rem', backgroundColor: 'transparent', color: '#3b82f6', border: '1px solid #3b82f6', borderRadius: '4px', cursor: 'pointer', marginRight: '0.5rem' };
-const btnEliminarStyle = { padding: '0.4rem 0.8rem', backgroundColor: 'transparent', color: '#ef4444', border: '1px solid #ef4444', borderRadius: '4px', cursor: 'pointer' };
+const btnGuardarStyle = { padding: '0.75rem 1.5rem', backgroundColor: 'var(--primary-green)', color: 'var(--text-on-primary)', border: '1px solid transparent', borderRadius: 'var(--radius-control)', fontWeight: '600', cursor: 'pointer' };
+const btnCancelarStyle = { padding: '0.75rem 1.5rem', backgroundColor: 'var(--bg-raised)', color: 'var(--text-secondary)', border: '1px solid var(--border-control)', borderRadius: 'var(--radius-control)', fontWeight: '600', cursor: 'pointer' };
+const btnEditarStyle = { padding: '0.6rem 0.9rem', backgroundColor: 'transparent', color: 'var(--text-secondary)', border: '1px solid var(--border-control)', borderRadius: 'var(--radius-control)', cursor: 'pointer', marginRight: '0.5rem' };
+const btnEliminarStyle = { padding: '0.6rem 0.9rem', backgroundColor: 'var(--status-error-bg)', color: 'var(--status-error)', border: '1px solid #a14b50', borderRadius: 'var(--radius-control)', cursor: 'pointer' };

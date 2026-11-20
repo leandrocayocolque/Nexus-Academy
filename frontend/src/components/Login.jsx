@@ -36,25 +36,25 @@ export default function Login() {
     <section className="admin-login">
       <h1>Acceso de administración</h1>
       <p>Iniciá sesión para gestionar la academia.</p>
-      <form onSubmit={enviar} aria-busy={pendiente} style={{ display: 'grid', gap: '1rem' }}>
+      <form onSubmit={enviar} aria-busy={pendiente} className="admin-auth-form">
         <label htmlFor="correo">Correo electrónico</label>
         <input id="correo" name="correo" type="email" autoComplete="username" required
           value={correo} onChange={e => setCorreo(e.target.value)} disabled={pendiente} />
         <label htmlFor="contrasena">Contraseña</label>
         <input id="contrasena" name="contrasena" type="password" autoComplete="off" required
           value={contrasena} onChange={e => setContrasena(e.target.value)} disabled={pendiente} />
-        {mensaje && <p role="alert" style={{ color: '#f87171' }}>{mensaje}</p>}
-        <button type="submit" disabled={pendiente} style={{ padding: '0.75rem',
-          background: 'var(--primary-green)', color: '#0a0a0a', borderRadius: '8px' }}>
+        {mensaje && <p role="alert">{mensaje}</p>}
+        <button type="submit" disabled={pendiente} className="admin-button-primary">
           {pendiente ? 'Validando acceso…' : 'Iniciar sesión'}
         </button>
         {pendiente && <button type="button" onClick={logout}>Cancelar acceso</button>}
       </form>
       <div style={{ marginTop: '1rem', textAlign: 'right' }}>
-        <Link to="/recuperar-contrasena" style={{ color: 'var(--primary-green)', fontSize: '0.9rem', textDecoration: 'none' }}>
+        <Link to="/recuperar-contrasena">
           ¿Olvidaste tu contraseña?
         </Link>
       </div>
+      <p><Link to="/registro">Crear cuenta de administración</Link> (primer administrador o alta autorizada).</p>
       <p>Por seguridad, al recargar la página deberás iniciar sesión nuevamente.</p>
     </section>
 

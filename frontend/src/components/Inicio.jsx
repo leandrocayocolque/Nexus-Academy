@@ -2,10 +2,17 @@ import React, { useEffect, useState } from 'react';
 import { academia, formatearFechaInicio } from '../api/academia';
 import { Link } from 'react-router-dom';
 import './PublicResponsive.css';
+import { useNegocio } from './NegocioContext';
+import { textoConfigurado } from '../utils/presentacion';
+
+const descripcionEditorial = 'El rol del profesional ha cambiado a ser un orquestador de tecnología. La teoría tradicional ya no es suficiente para destacar en el mercado actual.';
 
 export default function Inicio() {
+  const { negocio, cargando } = useNegocio();
+  const descripcion = textoConfigurado(cargando ? null : negocio?.descripcion, descripcionEditorial);
+
   return (
-    <div className="public-home" style={{ padding: '0', fontFamily: 'sans-serif' }}>
+    <div className="public-home">
       
       {/* SECCIÓN 1: HERO (Basado en la cabecera centrada con botones duales) */}
       <section className="public-home-hero" style={{
@@ -16,20 +23,18 @@ export default function Inicio() {
         <h1 className="public-home-title" style={{
           fontFamily: 'Georgia, serif',
           color: 'var(--text-main)',
-          margin: '0 0 1.5rem',
           letterSpacing: '-1px'
         }}>
           Formate para la era <span style={{color: 'var(--primary-green)'}}>agéntica</span>
         </h1>
-        <p style={{ color: '#9ca3af', fontSize: '1.25rem', maxWidth: '700px', margin: '0 auto 2.5rem', lineHeight: '1.6' }}>
-          El rol del profesional ha cambiado a ser un orquestador de tecnología. 
-          La teoría tradicional ya no es suficiente para destacar en el mercado actual.
+        <p className="public-home-description" style={{ color: '#9ca3af', fontSize: '1.25rem', maxWidth: '700px', margin: '0 auto 2.5rem', lineHeight: '1.6' }}>
+          {descripcion}
         </p>
         <div className="public-home-actions" style={{ display: 'flex', gap: '1rem', justifyContent: 'center' }}>
-          <Link to="/cursos" style={{ ...botonStyle, backgroundColor: 'var(--text-main)', color: 'var(--bg-dark)' }}>
+          <Link to="/cursos" className="public-button public-button-light">
             Empezar ahora &rarr;
           </Link>
-          <Link to="/contacto" style={{ ...botonStyle, backgroundColor: 'transparent', border: '1px solid var(--text-main)', color: 'var(--text-main)' }}>
+          <Link to="/contacto" className="public-button public-button-outline">
             Para empresas
           </Link>
         </div>
@@ -39,18 +44,7 @@ export default function Inicio() {
       <SeccionPublica tipo="destacados" />
 
       {/* SECCIÓN 2: FRANJA DE DATOS (Reemplazando los logos de empresas) */}
-      <section style={{ 
-        borderTop: '1px solid #333', 
-        borderBottom: '1px solid #333', 
-        padding: '2rem', 
-        display: 'flex', 
-        justifyContent: 'space-around', 
-        color: '#6b7280', 
-        fontSize: '1.1rem', 
-        fontWeight: 'bold', 
-        flexWrap: 'wrap', 
-        gap: '2rem' 
-      }}>
+      <section className="public-home-stats">
         <span>+10,000 ALUMNOS</span>
         <span>50+ CURSOS</span>
         <span>95% INSERCIÓN LABORAL</span>
@@ -89,7 +83,7 @@ export default function Inicio() {
             <p style={{ fontSize: '1.1rem', color: '#9ca3af', margin: '0 0 3rem', lineHeight: '1.6' }}>
               Sumergite en proyectos prácticos desde el día uno. Utilizá los frameworks, modelos y metodologías en los que confían las empresas de primera línea todos los días.
             </p>
-            <h3 style={{ fontSize: '2rem', color: '#4b5563', margin: '0 0 1rem', opacity: 0.5 }}>
+            <h3 style={{ fontSize: '2rem', color: 'var(--text-muted)', margin: '0 0 1rem' }}>
               Fluidez técnica, no solo teoría
             </h3>
           </div>
@@ -142,6 +136,13 @@ function SeccionPublica({ tipo }) {
           : datos.length === 0 ? <p>{promociones ? 'No hay promociones vigentes en este momento.' : 'No hay cursos destacados en este momento.'}</p>
             : <div className="public-home-publication-grid">
               {datos.map(item => <article key={item.id} className="public-home-publication-card">
+                {!promociones && <div className="public-home-course-cover">
+                  {item.imagenes?.[0]?.url ? <img
+                    src={item.imagenes[0].url}
+                    alt={item.imagenes[0].textoAlternativo || item.titulo}
+                    loading="lazy"
+                  /> : <span className="public-course-image-placeholder">Imagen no disponible</span>}
+                </div>}
                 <h3>{item.titulo}</h3>
                 {promociones ? <>
                   <p className="public-home-discount">{item.porcentajeDescuento}% de descuento</p>
@@ -160,14 +161,3 @@ function SeccionPublica({ tipo }) {
     </section>
   );
 }
-
-// Objeto de estilos para los botones redondeados
-const botonStyle = {
-  padding: '0.85rem 1.75rem',
-  borderRadius: '999px',
-  textDecoration: 'none',
-  fontWeight: '600',
-  fontSize: '1rem',
-  display: 'inline-block',
-  transition: 'transform 0.2s',
-};

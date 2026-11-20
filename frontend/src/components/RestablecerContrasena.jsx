@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import './AdminResponsive.css';
 import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import { toast } from 'sonner';
 import { useSesion } from '../auth/SesionContext.js';
@@ -45,7 +46,7 @@ export default function RestablecerContrasena() {
 
   if (!token) {
     return (
-      <section style={{ maxWidth: '440px', margin: '4rem auto', padding: '2rem', background: 'var(--bg-card)', border: '1px solid #333', borderRadius: '12px', textAlign: 'center' }}>
+      <section className="admin-login admin-auth-invalid">
         <h2>Enlace inválido</h2>
         <p style={{ color: '#9ca3af' }}>No se encontró el token de restablecimiento en la URL.</p>
         <Link to="/recuperar-contrasena" style={{ color: 'var(--primary-green)' }}>Solicitar un nuevo enlace</Link>
@@ -54,13 +55,13 @@ export default function RestablecerContrasena() {
   }
 
   return (
-    <section style={{ maxWidth: '440px', margin: '4rem auto', padding: '2rem', background: 'var(--bg-card)', border: '1px solid #333', borderRadius: '12px' }}>
+    <section className="admin-login">
       <h1 style={{ marginTop: 0 }}>Nueva contraseña</h1>
       <p style={{ color: '#9ca3af', fontSize: '0.85rem' }}>
         Debe tener al menos 12 caracteres, incluyendo una mayúscula, una minúscula y un número.
       </p>
 
-      <form onSubmit={handleSubmit} style={{ display: 'grid', gap: '1rem', marginTop: '1.5rem' }}>
+      <form onSubmit={handleSubmit} className="admin-auth-form">
         <label htmlFor="nueva-clave">Nueva contraseña</label>
         <input
           id="nueva-clave"
@@ -70,7 +71,6 @@ export default function RestablecerContrasena() {
           value={contrasenaNueva}
           onChange={(e) => setContrasenaNueva(e.target.value)}
           disabled={enviando}
-          style={{ padding: '0.75rem', borderRadius: '6px', border: '1px solid #4b5563', backgroundColor: '#111', color: 'var(--text-main)' }}
         />
 
         <label htmlFor="confirmar-clave">Confirmar nueva contraseña</label>
@@ -82,13 +82,12 @@ export default function RestablecerContrasena() {
           value={confirmarContrasenaNueva}
           onChange={(e) => setConfirmarContrasenaNueva(e.target.value)}
           disabled={enviando}
-          style={{ padding: '0.75rem', borderRadius: '6px', border: '1px solid #4b5563', backgroundColor: '#111', color: 'var(--text-main)' }}
         />
 
         <button
           type="submit"
           disabled={enviando}
-          style={{ padding: '0.75rem', background: 'var(--primary-green)', color: '#0a0a0a', fontWeight: '600', border: 'none', borderRadius: '8px', cursor: 'pointer', marginTop: '0.5rem' }}
+          className="admin-button-primary"
         >
           {enviando ? 'Guardando...' : 'Restablecer contraseña'}
         </button>

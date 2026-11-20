@@ -110,7 +110,7 @@ export default function ConfiguracionNegocio() {
 
       <form onSubmit={handleSubmit} style={{ display: 'grid', gap: '2rem', maxWidth: '800px' }}>
         {/* Bloque 1: Identidad y Descripción */}
-        <section style={cardStyle}>
+        <section className="admin-section-card">
           <h3 style={{ margin: 0, color: 'var(--primary-green)' }}>Identidad del Comercio</h3>
 
           <div style={groupStyle}>
@@ -139,7 +139,7 @@ export default function ConfiguracionNegocio() {
         </section>
 
         {/* Bloque 2: Datos de Contacto */}
-        <section style={cardStyle}>
+        <section className="admin-section-card">
           <h3 style={{ margin: 0, color: 'var(--primary-green)' }}>Ubicación y Contacto</h3>
 
           <div style={groupStyle}>
@@ -181,8 +181,8 @@ export default function ConfiguracionNegocio() {
         </section>
 
         {/* Bloque 3: Horarios de Atención */}
-        <section style={cardStyle}>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+        <section className="admin-section-card">
+          <div className="admin-section-heading">
             <h3 style={{ margin: 0, color: 'var(--primary-green)' }}>Horarios de Atención</h3>
             <button
               type="button"
@@ -223,7 +223,7 @@ export default function ConfiguracionNegocio() {
                   style={btnDeleteStyle}
                   title="Eliminar horario"
                 >
-                  ✕
+                  Eliminar
                 </button>
               </div>
             ))
@@ -231,8 +231,8 @@ export default function ConfiguracionNegocio() {
         </section>
 
         {/* Bloque 4: Redes Sociales */}
-        <section style={cardStyle}>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+        <section className="admin-section-card">
+          <div className="admin-section-heading">
             <h3 style={{ margin: 0, color: 'var(--primary-green)' }}>Redes Sociales</h3>
             <button
               type="button"
@@ -271,7 +271,7 @@ export default function ConfiguracionNegocio() {
                   style={btnDeleteStyle}
                   title="Eliminar red social"
                 >
-                  ✕
+                  Eliminar
                 </button>
               </div>
             ))
@@ -288,50 +288,40 @@ export default function ConfiguracionNegocio() {
   );
 }
 
-const cardStyle = {
-  backgroundColor: '#0a0a0a',
-  padding: '1.75rem',
-  borderRadius: '8px',
-  border: '1px solid #333',
-  display: 'flex',
-  flexDirection: 'column',
-  gap: '1.25rem'
-};
 const groupStyle = { display: 'flex', flexDirection: 'column', gap: '0.4rem' };
-const labelStyle = { color: '#d1d5db', fontSize: '0.9rem' };
+const labelStyle = { color: 'var(--text-secondary)', fontSize: '0.9rem' };
 const inputStyle = {
-  padding: '0.7rem',
-  borderRadius: '4px',
-  border: '1px solid #4b5563',
-  backgroundColor: '#111',
-  color: 'var(--text-main)',
-  outline: 'none'
+  padding: 'var(--space-2)',
+  borderRadius: 'var(--radius-control)',
+  border: '1px solid var(--border-control)',
+  backgroundColor: 'var(--bg-input)',
+  color: 'var(--text-main)'
 };
 const btnPrimaryStyle = {
   padding: '0.8rem 1.75rem',
   backgroundColor: 'var(--primary-green)',
-  color: '#0a0a0a',
-  border: 'none',
-  borderRadius: '4px',
+  color: 'var(--text-on-primary)',
+  border: '1px solid transparent',
+  borderRadius: 'var(--radius-control)',
   fontWeight: '600',
   cursor: 'pointer'
 };
 const btnAddStyle = {
-  padding: '0.45rem 0.9rem',
-  backgroundColor: 'rgba(16, 185, 129, 0.1)',
-  color: 'var(--primary-green)',
-  border: '1px solid var(--primary-green)',
-  borderRadius: '4px',
+  padding: '0.6rem 0.9rem',
+  backgroundColor: 'var(--bg-raised)',
+  color: 'var(--text-secondary)',
+  border: '1px solid var(--border-control)',
+  borderRadius: 'var(--radius-control)',
   fontSize: '0.85rem',
   fontWeight: '600',
   cursor: 'pointer'
 };
 const btnDeleteStyle = {
   padding: '0.65rem 0.85rem',
-  backgroundColor: 'rgba(239, 68, 68, 0.1)',
-  color: '#ef4444',
-  border: '1px solid #ef4444',
-  borderRadius: '4px',
+  backgroundColor: 'var(--status-error-bg)',
+  color: 'var(--status-error)',
+  border: '1px solid #a14b50',
+  borderRadius: 'var(--radius-control)',
   cursor: 'pointer',
   fontWeight: 'bold'
 };

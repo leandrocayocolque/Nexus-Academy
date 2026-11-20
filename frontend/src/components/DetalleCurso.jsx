@@ -37,7 +37,7 @@ export default function DetalleCurso() {
         )}
         <button 
           onClick={() => navigate('/cursos')} 
-          style={{ padding: '0.5rem 1rem', marginTop: '1rem', cursor: 'pointer', backgroundColor: 'var(--bg-card)', color: 'white', border: '1px solid #333' }}
+          className="public-button public-button-outline"
         >
           Volver al catálogo
         </button>
@@ -64,10 +64,20 @@ export default function DetalleCurso() {
         &larr; Volver al catálogo
       </button>
 
-      <div style={{ display: 'flex', flexDirection: 'column', gap: '2rem', backgroundColor: 'var(--bg-card)', borderRadius: '12px', overflow: 'hidden', border: '1px solid #333' }}>
-        
+      <div className="public-detail-card">
+        <header className="public-detail-heading">
+          <div className="public-detail-badges">
+            <span style={badgeStyle}>{curso.categoria.nombre}</span>
+            <span style={badgeStyle}>{nivelesCurso[curso.nivel]}</span>
+          </div>
+          <h1 className="public-detail-title">{curso.titulo}</h1>
+          <p className={`public-detail-availability${curso.disponible ? ' is-available' : ''}`}>
+            {curso.disponible ? `${curso.cuposDisponibles} cupos disponibles` : 'Sin disponibilidad'}
+          </p>
+        </header>
+
         {imagenActual?.url && (
-          <section aria-label={`Galería de ${curso.titulo}`}>
+          <section className="public-detail-gallery" aria-label={`Galería de ${curso.titulo}`}>
             <div className="public-detail-image" style={{ width: '100%' }}>
               <img id="imagen-curso-ampliada" src={imagenActual.url} alt={imagenActual.textoAlternativo || `${curso.titulo}, imagen ${indiceImagen + 1}`} style={{ width: '100%', height: '100%', objectFit: 'contain' }} />
             </div>
@@ -83,66 +93,44 @@ export default function DetalleCurso() {
           </section>
         )}
 
-        <div className="public-detail-content" style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
-          
-          <div style={{ display: 'flex', gap: '1rem', flexWrap: 'wrap' }}>
-            <span style={badgeStyle}>{curso.categoria.nombre}</span>
-            <span style={badgeStyle}>{nivelesCurso[curso.nivel]}</span>
-            <span style={{ ...badgeStyle, backgroundColor: 'rgba(255,255,255,0.05)', color: '#d1d5db', border: '1px solid #333' }}>
-              🕒 {curso.duracion}
-            </span>
-          </div>
+        <div className="public-detail-content">
+          <section aria-labelledby="curso-descripcion">
+            <h2 id="curso-descripcion" className="public-detail-section-title">Sobre este curso</h2>
+            <p className="public-detail-description">{curso.descripcion}</p>
+          </section>
 
-          <h1 className="public-detail-title" style={{ fontFamily: 'Georgia, serif', color: 'var(--text-main)', margin: '0', lineHeight: '1.1' }}>
-            {curso.titulo}
-          </h1>
-
-          <p style={{ fontSize: '1.25rem', lineHeight: '1.7', color: '#d1d5db', margin: '0' }}>
-            {curso.descripcion}
-          </p>
-
-          {/* Información publicada por la academia */}
-          <div className="public-detail-facts" style={{ display: 'flex', marginTop: '2rem', padding: '2rem 0', borderTop: '1px solid #333', borderBottom: '1px solid #333', flexWrap: 'wrap' }}>
+          <dl className="public-detail-facts">
             <div>
-              <h4 style={{ color: '#9ca3af', margin: '0 0 0.5rem 0', fontSize: '0.9rem', textTransform: 'uppercase' }}>Modalidad</h4>
-              <p style={{ color: 'var(--text-main)', margin: 0, fontWeight: 'bold', fontSize: '1.1rem' }}>{modalidadesCurso[curso.modalidad]}</p>
+              <dt>Duración</dt>
+              <dd>{curso.duracion}</dd>
             </div>
             <div>
-              <h4 style={{ color: '#9ca3af', margin: '0 0 0.5rem 0', fontSize: '0.9rem', textTransform: 'uppercase' }}>Disponibilidad</h4>
-              <p style={{ color: 'var(--primary-green)', margin: 0, fontWeight: 'bold', fontSize: '1.1rem' }}>{curso.disponible ? `${curso.cuposDisponibles} cupos disponibles` : 'Sin disponibilidad'}</p>
+              <dt>Modalidad</dt>
+              <dd>{modalidadesCurso[curso.modalidad]}</dd>
             </div>
             <div>
-              <h4 style={{ color: '#9ca3af', margin: '0 0 0.5rem 0', fontSize: '0.9rem', textTransform: 'uppercase' }}>Inicio</h4>
-              <p style={{ color: 'var(--text-main)', margin: 0, fontWeight: 'bold', fontSize: '1.1rem' }}>{formatearFechaInicio(curso.fechaInicio)}</p>
+              <dt>Disponibilidad</dt>
+              <dd>{curso.disponible ? `${curso.cuposDisponibles} cupos disponibles` : 'Sin disponibilidad'}</dd>
             </div>
-          </div>
+            <div>
+              <dt>Inicio</dt>
+              <dd>{formatearFechaInicio(curso.fechaInicio)}</dd>
+            </div>
+          </dl>
 
-          <p style={{ color: 'var(--text-main)', margin: 0, fontSize: '1.25rem' }}>
-            Precio: {new Intl.NumberFormat('es-AR', { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(Number(curso.precio))}
-          </p>
-
-          <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: '1rem' }}>
+          <section className="public-detail-contact" aria-label="Precio y consulta">
+            <p className="public-detail-price">
+              <span>Precio:</span> {new Intl.NumberFormat('es-AR', { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(Number(curso.precio))}
+            </p>
             {/* T2 utiliza el UUID y el asunto para contextualizar la consulta. */}
             <Link
-              className="public-detail-inquiry"
+              className="public-detail-inquiry public-button public-button-primary"
               to="/contacto"
               state={{ cursoId: curso.id, asunto: asuntoConsultaCurso(curso.titulo) }}
-              style={{
-                padding: '1rem 2.5rem',
-                backgroundColor: 'var(--primary-green)',
-                color: '#fff',
-                textDecoration: 'none',
-                borderRadius: '999px',
-                fontWeight: 'bold',
-                fontSize: '1.1rem',
-                transition: 'background-color 0.2s'
-              }}
-              onMouseOver={(e) => e.target.style.backgroundColor = 'var(--hover-green)'}
-              onMouseOut={(e) => e.target.style.backgroundColor = 'var(--primary-green)'}
             >
               Consultar sobre este curso &rarr;
             </Link>
-          </div>
+          </section>
 
         </div>
       </div>

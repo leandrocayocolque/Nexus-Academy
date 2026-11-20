@@ -12,12 +12,15 @@ const CAMPOS_PUBLICOS_USUARIO = Object.freeze([
 export function serializarUsuario(usuario) {
   if (!usuario) return usuario;
 
-  return Object.fromEntries(
-    CAMPOS_PUBLICOS_USUARIO.filter((campo) => Object.hasOwn(usuario, campo)).map((campo) => [
-      campo,
-      usuario[campo]
-    ])
-  );
+  return {
+    ...Object.fromEntries(
+      CAMPOS_PUBLICOS_USUARIO.filter((campo) => Object.hasOwn(usuario, campo)).map((campo) => [
+        campo,
+        usuario[campo]
+      ])
+    ),
+    telefono: usuario.telefono ?? null
+  };
 }
 
 export const sanitizeUser = serializarUsuario;

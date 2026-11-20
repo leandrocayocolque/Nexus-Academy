@@ -15,6 +15,7 @@ import GestionPromociones from './components/GestionPromociones';
 import { Toaster } from 'sonner';
 import SesionProvider from './auth/SesionProvider';
 import Login from './components/Login';
+import Registro from './components/Registro';
 import RecuperarContrasena from './components/RecuperarContrasena';
 import RestablecerContrasena from './components/RestablecerContrasena';
 import PerfilAdmin from './components/PerfilAdmin';
@@ -28,14 +29,16 @@ export default function App() {
       <NegocioProvider>
         {/* Contenedor global de notificaciones */}
         <Toaster
+          theme="dark"
           position="bottom-right"
           toastOptions={{
             style: {
-              background: '#0a0a0a',
-              border: '1px solid var(--primary-green)',
+              background: 'var(--bg-card)',
+              border: '1px solid var(--border-control)',
               color: 'var(--text-main)',
-              fontFamily: 'Consolas, monospace',
-              borderRadius: '4px'
+              fontFamily: 'var(--font-body)',
+              borderRadius: 'var(--radius-control)',
+              boxShadow: 'var(--shadow-card)'
             },
           }}
         />
@@ -49,6 +52,7 @@ export default function App() {
             <Route path="/cursos/:id" element={<DetalleCurso />} />
             <Route path="/contacto" element={<Contacto />} />
             <Route path="/login" element={<Login />} />
+            <Route path="/registro" element={<Registro />} />
             <Route path="/recuperar-contrasena" element={<RecuperarContrasena />} />
             <Route path="/restablecer-contrasena" element={<RestablecerContrasena />} />
 

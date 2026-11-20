@@ -100,6 +100,7 @@ export function crearServicioAutenticacion({
           correo: datos.correo,
           nombre: datos.nombre,
           apellido: datos.apellido,
+          telefono: datos.telefono,
           hashContrasena,
           rol: ROLES.ADMIN,
           activo: true

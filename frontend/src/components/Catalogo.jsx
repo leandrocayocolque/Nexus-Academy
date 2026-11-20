@@ -86,15 +86,7 @@ export default function Catalogo() {
             aria-label="Buscar curso"
             value={busqueda}
             onChange={(e) => { setBusqueda(e.target.value); setPaginaActual(1); }}
-            style={{ 
-              width: '100%', 
-              padding: '0.75rem', 
-              borderRadius: '4px', 
-              border: '1px solid #4b5563', 
-              backgroundColor: '#0a0a0a', 
-              color: 'var(--text-main)',
-              boxSizing: 'border-box'
-            }} 
+            className="public-control"
           />
         </div>
 
@@ -129,7 +121,7 @@ export default function Catalogo() {
           <select 
             value={itemsPorPagina} 
             onChange={handleCambioItems} 
-            style={{ padding: '0.4rem', borderRadius: '4px', backgroundColor: '#0a0a0a', color: 'var(--text-main)', border: '1px solid #4b5563' }}
+            className="public-control"
           >
             <option value={2}>2</option>
             <option value={6}>6</option>
@@ -145,47 +137,32 @@ export default function Catalogo() {
                 <article 
                   key={curso.id} 
                   onClick={() => navigate(`/cursos/${curso.id}`)}
-                  style={{ 
-                    backgroundColor: 'var(--bg-card)', 
-                    borderRadius: '8px', 
-                    overflow: 'hidden', 
-                    border: '1px solid #333',
-                    display: 'flex',
-                    flexDirection: 'column',
-                    transition: 'transform 0.2s',
-                    cursor: 'pointer'
-                  }}
+                  className="public-course-card"
                   onMouseOver={(e) => e.currentTarget.style.transform = 'translateY(-5px)'}
                   onMouseOut={(e) => e.currentTarget.style.transform = 'translateY(0)'}
                 >
-                  <div style={{ height: '200px', overflow: 'hidden' }}>
-                    {curso.imagenes?.[0]?.url && (
+                  <div className="public-course-image">
+                    {curso.imagenes?.[0]?.url ? (
                       <img
                         src={curso.imagenes?.[0]?.url}
                         alt={curso.imagenes[0].textoAlternativo || curso.titulo}
                         style={{ width: '100%', height: '100%', objectFit: 'cover' }}
                       />
+                    ) : (
+                      <span className="public-course-image-placeholder">Imagen no disponible</span>
                     )}
                   </div>
-                  <div style={{ padding: '1.5rem', display: 'flex', flexDirection: 'column', flex: 1 }}>
-                    <h3 style={{ color: 'var(--primary-green)', margin: '0 0 0.5rem 0', fontSize: '1.25rem' }}>
+                  <div className="public-course-content">
+                    <h3 className="public-course-title">
                       {curso.titulo}
                     </h3>
-                    <p style={{ margin: '0 0 1rem 0', fontSize: '0.85rem', color: '#9ca3af' }}>
-                      Área: {curso.categoria.nombre} • {nivelesCurso[curso.nivel]} • {modalidadesCurso[curso.modalidad]} • 🕒 {curso.duracion}
+                    <p className="public-course-meta">
+                      Área: {curso.categoria.nombre} • {nivelesCurso[curso.nivel]} • {modalidadesCurso[curso.modalidad]} • Duración: {curso.duracion}
                     </p>
-                    <p style={{ fontSize: '0.95rem', lineHeight: '1.5', color: '#d1d5db', margin: '0 0 1.5rem 0', flex: 1 }}>
+                    <p className="public-course-summary">
                       {curso.descripcion}
                     </p>
-                    <button style={{
-                      padding: '0.5rem',
-                      backgroundColor: 'transparent',
-                      border: '1px solid var(--primary-green)',
-                      color: 'var(--primary-green)',
-                      borderRadius: '4px',
-                      cursor: 'pointer',
-                      fontWeight: '600'
-                    }}>
+                    <button className="public-button public-button-outline">
                       Ver Detalles
                     </button>
                   </div>
@@ -232,8 +209,7 @@ export default function Catalogo() {
 const btnPaginacionStyle = { 
   padding: '0.5rem 1rem', 
   backgroundColor: 'transparent', 
-  border: '1px solid #4b5563', 
-  borderRadius: '4px', 
+  border: '1px solid var(--border-control)',
+  borderRadius: 'var(--radius-control)',
   color: 'var(--text-main)',
-  transition: 'background-color 0.2s'
 };

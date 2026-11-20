@@ -3,6 +3,7 @@ import { useLocation } from 'react-router-dom';
 import { toast } from 'sonner';
 import { academia, validarConsulta, contextoConsulta } from '../api/academia';
 import { useNegocio } from './NegocioContext';
+import { etiquetaHorario } from '../utils/presentacion.js';
 import './PublicResponsive.css';
 
 export default function Contacto() {
@@ -73,12 +74,7 @@ export default function Contacto() {
 
   // Función auxiliar para aplicar el borde rojo si hay un error
   const getStyleInput = (nombreCampo) => ({
-    padding: '0.75rem',
-    borderRadius: '4px',
-    backgroundColor: '#0a0a0a',
-    color: 'var(--text-main)',
-    border: errores[nombreCampo] ? '1px solid #ef4444' : '1px solid #4b5563',
-    outline: 'none'
+    borderColor: errores[nombreCampo] ? 'var(--status-error)' : 'var(--border-control)'
   });
 
   const horarios = negocio?.horariosAtencion ? Object.entries(negocio.horariosAtencion) : [];
@@ -90,7 +86,7 @@ export default function Contacto() {
   return (
     <div className="public-contact" style={{ maxWidth: '1050px', margin: '0 auto' }}>
       <header style={{ textAlign: 'center', marginBottom: '2.5rem' }}>
-        <h2 style={{ color: 'var(--primary-green)', fontSize: '2.5rem', margin: '0 0 0.5rem 0' }}>
+        <h2 className="public-contact-title">
           Contactanos
         </h2>
         <p style={{ color: '#9ca3af', fontSize: '1.1rem', margin: 0 }}>
@@ -101,42 +97,28 @@ export default function Contacto() {
       <div style={{ display: 'flex', flexWrap: 'wrap', gap: '2rem', alignItems: 'flex-start', justifyContent: 'center' }}>
         {/* Tarjeta de Información del Comercio */}
         {hayInfoNegocio && (
-          <aside
-            style={{
-              flex: '1 1 320px',
-              maxWidth: '400px',
-              minWidth: 0,
-              overflowWrap: 'anywhere',
-              backgroundColor: 'var(--bg-card)',
-              padding: '2rem',
-              borderRadius: '8px',
-              border: '1px solid #333',
-              display: 'flex',
-              flexDirection: 'column',
-              gap: '1.5rem'
-            }}
-          >
+          <aside className="public-contact-info">
             <h3 style={{ margin: 0, color: 'var(--primary-green)', fontSize: '1.35rem' }}>
               {negocio?.nombre || 'Información de Contacto'}
             </h3>
 
             {negocio?.direccion && (
               <div>
-                <strong style={{ color: '#d1d5db', display: 'block', marginBottom: '0.25rem' }}>📍 Dirección</strong>
+                <strong style={{ color: '#d1d5db', display: 'block', marginBottom: '0.25rem' }}>Dirección</strong>
                 <span style={{ color: '#9ca3af' }}>{negocio.direccion}</span>
               </div>
             )}
 
             {negocio?.telefono && (
               <div>
-                <strong style={{ color: '#d1d5db', display: 'block', marginBottom: '0.25rem' }}>📞 Teléfono</strong>
+                <strong style={{ color: '#d1d5db', display: 'block', marginBottom: '0.25rem' }}>Teléfono</strong>
                 <span style={{ color: '#9ca3af' }}>{negocio.telefono}</span>
               </div>
             )}
 
             {negocio?.correo && (
               <div>
-                <strong style={{ color: '#d1d5db', display: 'block', marginBottom: '0.25rem' }}>✉️ Correo</strong>
+                <strong style={{ color: '#d1d5db', display: 'block', marginBottom: '0.25rem' }}>Correo</strong>
                 <a href={`mailto:${negocio.correo}`} style={{ color: 'var(--primary-green)', textDecoration: 'none' }}>
                   {negocio.correo}
                 </a>
@@ -145,11 +127,11 @@ export default function Contacto() {
 
             {horarios.length > 0 && (
               <div>
-                <strong style={{ color: '#d1d5db', display: 'block', marginBottom: '0.5rem' }}>🕒 Horarios de atención</strong>
+                <strong style={{ color: '#d1d5db', display: 'block', marginBottom: '0.5rem' }}>Horarios de atención</strong>
                 <ul style={{ listStyle: 'none', padding: 0, margin: 0, display: 'grid', gap: '0.35rem', color: '#9ca3af', fontSize: '0.95rem' }}>
                   {horarios.map(([dias, franja]) => (
                     <li key={dias}>
-                      <span style={{ color: '#d1d5db' }}>{dias}:</span> {franja}
+                      <span style={{ color: '#d1d5db' }}>{etiquetaHorario(dias)}:</span> {franja}
                     </li>
                   ))}
                 </ul>
@@ -158,7 +140,7 @@ export default function Contacto() {
 
             {redes.length > 0 && (
               <div>
-                <strong style={{ color: '#d1d5db', display: 'block', marginBottom: '0.6rem' }}>🌐 Redes sociales</strong>
+                <strong style={{ color: '#d1d5db', display: 'block', marginBottom: '0.6rem' }}>Redes sociales</strong>
                 <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.6rem' }}>
                   {redes.map(([nombreRed, url]) => (
                     <a
@@ -192,18 +174,6 @@ export default function Contacto() {
           onSubmit={handleSubmit}
           aria-busy={pendiente}
           noValidate
-          style={{
-            flex: '2 1 420px',
-            maxWidth: '600px',
-            minWidth: 0,
-            display: 'flex',
-            flexDirection: 'column',
-            gap: '1.5rem',
-            backgroundColor: 'var(--bg-card)',
-            borderRadius: '8px',
-            border: '1px solid #333',
-            boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.5)'
-          }}
         >
           {/* Campo Nombre */}
           <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
@@ -287,18 +257,7 @@ export default function Contacto() {
           <button
             type="submit"
             disabled={pendiente}
-            style={{
-              padding: '1rem',
-              backgroundColor: 'var(--primary-green)',
-              color: '#fff',
-              border: 'none',
-              borderRadius: '4px',
-              fontSize: '1.05rem',
-              fontWeight: '600',
-              cursor: 'pointer',
-              marginTop: '1rem',
-              transition: 'background-color 0.2s'
-            }}
+            className="public-button public-button-primary"
             onMouseOver={(e) => e.target.style.backgroundColor = 'var(--hover-green)'}
             onMouseOut={(e) => e.target.style.backgroundColor = 'var(--primary-green)'}
           >

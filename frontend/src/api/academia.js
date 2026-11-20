@@ -275,6 +275,20 @@ export function crearApiAcademia(solicitar = cliente) {
     eliminarCategoriaAdmin: (id, { signal } = {}) =>
       solicitar(`/admin/categorias/${encodeURIComponent(id)}`, { method: 'DELETE', signal }),
     obtenerConsultaAdmin,
+    actualizarEstadoConsultaAdmin: async (id, estado, { signal } = {}) => {
+      if (!['PENDIENTE', 'LEIDA', 'RESPONDIDA'].includes(estado)) {
+        throw new ErrorApi('Seleccioná un estado válido para la consulta.', { code: 'VALIDACION_CONSULTA' });
+      }
+      signal?.throwIfAborted();
+      const actualizada = await solicitar(`/admin/consultas/${encodeURIComponent(id)}/estado`, {
+        method: 'PATCH', body: { estado }, signal,
+      });
+      signal?.throwIfAborted();
+      if (actualizada?.estado !== estado) {
+        throw new ErrorApi('La respuesta del cambio de estado no es válida.', { code: 'RESPUESTA_INVALIDA' });
+      }
+      return actualizada;
+    },
     marcarConsultaLeidaAdmin: async (id, { signal } = {}) => {
       // Volver a consultar evita degradar una respuesta ya visible en el servidor.
       const actual = await obtenerConsultaAdmin(id, { signal });

@@ -1,21 +1,51 @@
 :root {
-  --bg-dark: #0a0a0a; /* Negro profundo para el fondo */
-  --bg-card: #1a1a1a; /* Gris muy oscuro para tarjetas y menú */
-  --text-main: #f3f4f6; /* Blanco invierno para lectura cómoda */
-  --primary-green: #10b981; /* Verde esmeralda vibrante */
+  color-scheme: dark;
+  --bg-dark: #0a0a0a;
+  --bg-card: #1a1a1a;
+  --bg-raised: #202020;
+  --bg-input: #101010;
+  --text-main: #f3f4f6;
+  --text-secondary: #d1d5db;
+  --text-muted: #a3adb9;
+  --primary-green: #10b981;
   --hover-green: #059669;
+  --text-on-primary: #071c15;
+  --border-subtle: #303536;
+  --border-control: #59616a;
+  --status-error: #fca5a5;
+  --status-error-bg: #281719;
+  --status-success-bg: #10271f;
+  --font-body: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+  --font-heading: Georgia, 'Times New Roman', serif;
+  --space-1: 0.5rem;
+  --space-2: 0.75rem;
+  --space-3: 1rem;
+  --space-4: 1.5rem;
+  --space-5: 2rem;
+  --space-6: 3rem;
+  --radius-control: 8px;
+  --radius-card: 16px;
+  --radius-pill: 999px;
+  --shadow-card: 0 12px 32px rgba(0, 0, 0, 0.18);
+  --focus-ring: 2px solid #6ee7b7;
+  --transition-control: 160ms ease;
 }
 
 body {
   margin: 0;
   background-color: var(--bg-dark);
   color: var(--text-main);
-  font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+  font-family: var(--font-body);
 }
 
-/* Efecto hover: la imagen hace un ligero zoom y se desplaza hacia la derecha */
+/* Inherit typography without imposing layout on administration controls. */
+:where(button, input, select, textarea) {
+  font: inherit;
+}
+
+/* Subtle image emphasis without moving the editorial composition. */
 .img-hover-effect {
-  border-radius: 8px;
+  border-radius: var(--radius-card);
   overflow: hidden;
   position: relative;
   background-color: var(--bg-card);
@@ -25,15 +55,21 @@ body {
   width: 100%;
   height: 100%;
   object-fit: cover;
-  transition: transform 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+  transition: filter var(--transition-control);
 }
 
 .img-hover-effect:hover img {
-  transform: scale(1.08) translateX(10px);
+  filter: brightness(1.06);
 }
 
-/* Reseteo básico de listas para el sidebar */
+/* Retain the existing list reset used by the administration sidebar. */
 ul {
   list-style: none;
   padding: 0;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .img-hover-effect img {
+    transition: none;
+  }
 }

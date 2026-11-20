@@ -23,7 +23,6 @@ export default function Navbar() {
     textDecoration: 'none',
     fontSize: '0.95rem',
     fontWeight: '500',
-    transition: 'color 0.2s ease',
   });
 
   return (
@@ -34,8 +33,6 @@ export default function Navbar() {
       backgroundColor: 'rgba(10, 10, 10, 0.75)', // Fondo oscuro con transparencia
       backdropFilter: 'blur(12px)', // Desenfoque estilo cristal
       borderBottom: '1px solid rgba(255, 255, 255, 0.05)',
-      position: 'sticky',
-      top: 0,
       zIndex: 100 // Asegura que siempre esté por encima del resto del contenido
     }}>
       <div>
@@ -76,11 +73,11 @@ export default function Navbar() {
         ) : (
           // --- ENLACES DEL SITIO PÚBLICO ---
           <>
-            <li><Link to="/" style={getLinkStyle('/')}>Inicio</Link></li>
-            <li><Link to="/cursos" style={getLinkStyle('/cursos')}>Catálogo</Link></li>
-            <li><Link to="/contacto" style={getLinkStyle('/contacto')}>Contacto</Link></li>
+            <li><Link to="/" aria-current={location.pathname === '/' ? 'page' : undefined}>Inicio</Link></li>
+            <li><Link to="/cursos" aria-current={location.pathname === '/cursos' ? 'page' : undefined}>Catálogo</Link></li>
+            <li><Link to="/contacto" aria-current={location.pathname === '/contacto' ? 'page' : undefined}>Contacto</Link></li>
             <li>
-              <button onClick={() => navigate('/login')} style={btnPrimaryStyle}>
+              <button onClick={() => navigate('/login')} className="public-button public-button-outline">
                 Admin Login
               </button>
             </li>
@@ -101,7 +98,6 @@ const btnPrimaryStyle = {
   fontSize: '0.9rem',
   fontWeight: '600',
   cursor: 'pointer',
-  transition: 'all 0.2s ease',
 };
 
 const btnSecondaryStyle = {

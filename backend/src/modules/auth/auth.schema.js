@@ -15,6 +15,12 @@ export const esquemaNombre = z
   .min(2, 'Debe contener al menos 2 caracteres.')
   .max(100, 'No puede superar los 100 caracteres.');
 
+export const esquemaTelefono = z
+  .string({ required_error: 'El teléfono es obligatorio.' })
+  .trim()
+  .min(1, 'El teléfono es obligatorio.')
+  .max(50, 'El teléfono no puede superar los 50 caracteres.');
+
 export const esquemaContrasena = z
   .string({ required_error: 'La contraseña es obligatoria.' })
   .min(12, 'La contraseña debe contener al menos 12 caracteres.')
@@ -35,6 +41,7 @@ export const esquemaRegistroAdministrador = confirmarContrasena(
       correo: esquemaCorreo,
       nombre: esquemaNombre,
       apellido: esquemaNombre,
+      telefono: esquemaTelefono,
       contrasena: esquemaContrasena,
       confirmarContrasena: z.string()
     })

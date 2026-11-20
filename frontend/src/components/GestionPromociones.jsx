@@ -89,9 +89,10 @@ export default function GestionPromociones() {
     <div className="admin-promotions">
       <header className="admin-page-header">
         <h2>Gestión de Promociones</h2>
-        {!formulario && <button disabled={bloqueada} onClick={() => abrir()}>Nueva promoción</button>}
+        {!formulario && <button className="admin-button-primary" disabled={bloqueada} onClick={() => abrir()}>Nueva promoción</button>}
       </header>
-      {aviso && <p role="status">{aviso}</p>}
+      <p className="admin-help">Para aparecer en Inicio, la promoción debe estar ACTIVA y dentro de su período de vigencia. Una promoción activa con inicio futuro todavía no se publica. Revisá las fechas antes de guardarlas.</p>
+      {aviso && <p className="admin-success" role="status">{aviso}</p>}
       {pendiente && <p role="status">Guardando cambios...</p>}
       {cargando && <p role="status">Cargando promociones y cursos...</p>}
       {error && <div role="alert"><p>{error}</p>
@@ -121,7 +122,7 @@ export default function GestionPromociones() {
               {formulario.cursoId && !cursos.some(c => c.id === formulario.cursoId) && <option value={formulario.cursoId}>Asociación actual ({formulario.cursoId})</option>}
               {cursos.map(curso => <option key={curso.id} value={curso.id}>{curso.titulo}</option>)}
             </select>
-            <p id="promo-fechas-ayuda">Horarios en la zona local de tu navegador. Se guardan como instantes UTC. Dejá la fecha vacía para no establecer ese límite; la fecha final es inclusiva.</p>
+            <p className="admin-help" id="promo-fechas-ayuda">Horarios en la zona local de tu navegador. Se guardan como instantes UTC. Dejá la fecha vacía para no establecer ese límite. El fin es inclusivo e incluye la hora indicada: no se extiende automáticamente hasta el final del día.</p>
             <label htmlFor="promo-inicio">Inicio (opcional)</label>
             <input id="promo-inicio" name="fechaInicio" type="datetime-local" step="0.001" aria-describedby="promo-fechas-ayuda" value={formulario.fechaInicio} onChange={cambiar} />
             <label htmlFor="promo-fin">Fin (opcional)</label>
@@ -129,7 +130,7 @@ export default function GestionPromociones() {
           </fieldset>
           <div className="admin-actions">
             <button type="button" disabled={pendiente} onClick={() => { setFormulario(null); setError(''); setDetalles([]); }}>Cancelar</button>
-            <button type="submit" disabled={bloqueada}>Guardar promoción</button>
+            <button className="admin-button-primary" type="submit" disabled={bloqueada}>Guardar promoción</button>
           </div>
         </form>
       ) : (
@@ -139,7 +140,7 @@ export default function GestionPromociones() {
             <p>Esta acción no se puede deshacer.</p>
             <div className="admin-actions">
               <button disabled={pendiente} onClick={() => setEliminar(null)}>Cancelar</button>
-              <button disabled={bloqueada} onClick={() => ejecutar(opciones => academia.eliminarPromocionAdmin(eliminar.id, opciones))}>Confirmar eliminación</button>
+              <button className="admin-button-danger" disabled={bloqueada} onClick={() => ejecutar(opciones => academia.eliminarPromocionAdmin(eliminar.id, opciones))}>Confirmar eliminación</button>
             </div>
           </section>}
           {!cargando && !desactualizada && promociones.length === 0 && <p>No hay promociones registradas.</p>}
@@ -152,7 +153,7 @@ export default function GestionPromociones() {
               <p>Inicio: {fechaVisible(promocion.fechaInicio)}<br />Fin: {fechaVisible(promocion.fechaFin)} (hora local)</p>
               <div className="admin-actions">
                 <button disabled={bloqueada} aria-label={`Editar ${promocion.titulo}`} onClick={() => abrir(promocion)}>Editar</button>
-                <button disabled={bloqueada} aria-label={`Eliminar ${promocion.titulo}`} onClick={() => { setEliminar(promocion); setError(''); setDetalles([]); }}>Eliminar</button>
+                <button className="admin-button-danger" disabled={bloqueada} aria-label={`Eliminar ${promocion.titulo}`} onClick={() => { setEliminar(promocion); setError(''); setDetalles([]); }}>Eliminar</button>
               </div>
             </li>)}
           </ul>}

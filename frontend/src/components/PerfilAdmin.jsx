@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { toast } from 'sonner';
 import { useSesion } from '../auth/SesionContext.js';
+import { datosPerfil } from '../auth/registro.js';
 
 export default function PerfilAdmin() {
   const { usuario, solicitar, actualizarUsuario } = useSesion();
@@ -9,7 +10,8 @@ export default function PerfilAdmin() {
   const [datos, setDatos] = useState({
     nombre: usuario?.nombre || '',
     apellido: usuario?.apellido || '',
-    correo: usuario?.correo || ''
+    correo: usuario?.correo || '',
+    telefono: usuario?.telefono || ''
   });
   const [guardandoDatos, setGuardandoDatos] = useState(false);
 
@@ -26,7 +28,8 @@ export default function PerfilAdmin() {
       setDatos({
         nombre: usuario.nombre || '',
         apellido: usuario.apellido || '',
-        correo: usuario.correo || ''
+        correo: usuario.correo || '',
+        telefono: usuario.telefono || ''
       });
     }
   }, [usuario]);
@@ -37,11 +40,7 @@ export default function PerfilAdmin() {
     try {
       const actualizado = await solicitar('/usuarios/me', {
         method: 'PATCH',
-        body: {
-          nombre: datos.nombre.trim(),
-          apellido: datos.apellido.trim(),
-          correo: datos.correo.trim()
-        }
+        body: datosPerfil(datos, usuario)
       });
       actualizarUsuario(actualizado);
       toast.success('Datos personales actualizados correctamente.');
@@ -85,7 +84,7 @@ export default function PerfilAdmin() {
 
       <div style={{ display: 'grid', gap: '2rem', maxWidth: '700px' }}>
         {/* Bloque 1: Datos Personales */}
-        <form onSubmit={handleGuardarDatos} style={cardStyle}>
+        <form onSubmit={handleGuardarDatos} className="admin-section-card">
           <h3 style={{ marginTop: 0, color: 'var(--primary-green)' }}>Datos Personales</h3>
 
           <div style={{ display: 'flex', gap: '1rem', flexWrap: 'wrap' }}>
@@ -125,6 +124,15 @@ export default function PerfilAdmin() {
             />
           </div>
 
+          <div style={groupStyle}>
+            <label htmlFor="perfil-telefono" style={labelStyle}>Teléfono</label>
+            <input id="perfil-telefono" type="tel" autoComplete="tel" maxLength={50}
+              required={usuario?.telefono != null} value={datos.telefono}
+              onChange={(e) => setDatos({ ...datos, telefono: e.target.value })}
+              style={inputStyle} aria-describedby="perfil-telefono-ayuda" />
+            <small id="perfil-telefono-ayuda">Hasta 50 caracteres. Si tu cuenta aún no tiene teléfono, podés dejarlo vacío sin modificar ese dato.</small>
+          </div>
+
           <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
             <button type="submit" disabled={guardandoDatos} style={btnPrimaryStyle}>
               {guardandoDatos ? 'Guardando...' : 'Guardar Cambios'}
@@ -133,7 +141,7 @@ export default function PerfilAdmin() {
         </form>
 
         {/* Bloque 2: Seguridad / Contraseña */}
-        <form onSubmit={handleCambiarClave} style={cardStyle}>
+        <form onSubmit={handleCambiarClave} className="admin-section-card">
           <h3 style={{ marginTop: 0, color: 'var(--primary-green)' }}>Cambiar Contraseña</h3>
           <p style={{ color: '#9ca3af', fontSize: '0.85rem', margin: 0 }}>
             La nueva contraseña debe contener al menos 12 caracteres, una mayúscula, una minúscula y un número.
@@ -187,31 +195,21 @@ export default function PerfilAdmin() {
   );
 }
 
-const cardStyle = {
-  backgroundColor: '#0a0a0a',
-  padding: '1.75rem',
-  borderRadius: '8px',
-  border: '1px solid #333',
-  display: 'flex',
-  flexDirection: 'column',
-  gap: '1.25rem'
-};
-const groupStyle = { display: 'flex', flexDirection: 'column', gap: '0.4rem' };
-const labelStyle = { color: '#d1d5db', fontSize: '0.9rem' };
+const groupStyle = { display: 'flex', flexDirection: 'column', gap: 'var(--space-1)', minWidth: 'min(100%, 200px)' };
+const labelStyle = { color: 'var(--text-secondary)', fontSize: '0.9rem' };
 const inputStyle = {
-  padding: '0.7rem',
-  borderRadius: '4px',
-  border: '1px solid #4b5563',
-  backgroundColor: '#111',
-  color: 'var(--text-main)',
-  outline: 'none'
+  padding: 'var(--space-2)',
+  borderRadius: 'var(--radius-control)',
+  border: '1px solid var(--border-control)',
+  backgroundColor: 'var(--bg-input)',
+  color: 'var(--text-main)'
 };
 const btnPrimaryStyle = {
   padding: '0.7rem 1.4rem',
   backgroundColor: 'var(--primary-green)',
-  color: '#0a0a0a',
-  border: 'none',
-  borderRadius: '4px',
+  color: 'var(--text-on-primary)',
+  border: '1px solid transparent',
+  borderRadius: 'var(--radius-control)',
   fontWeight: '600',
   cursor: 'pointer'
 };

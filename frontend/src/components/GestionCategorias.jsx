@@ -2,6 +2,7 @@ import React, { useEffect, useRef, useState } from 'react';
 import { toast } from 'sonner';
 import { useSesion } from '../auth/SesionContext';
 import { mutarYRecargar } from '../api/academia';
+import { referenciaId } from '../utils/presentacion';
 
 export default function GestionCategorias() {
   const { academia } = useSesion();
@@ -121,7 +122,7 @@ export default function GestionCategorias() {
         </header>
         {error && <p role="alert">{error}</p>}
         {pendiente && <p role="status">Guardando cambios...</p>}
-        <form className="admin-form-panel" onSubmit={handleSubmit} style={{ backgroundColor: '#0a0a0a', borderRadius: '8px', border: '1px solid #333', display: 'flex', flexDirection: 'column', gap: '1.5rem', maxWidth: '600px' }}>
+        <form className="admin-form-panel admin-stacked-form" onSubmit={handleSubmit}>
           
           <div style={inputGroupStyle}>
             <label style={labelStyle}>Nombre de la Categoría *</label>
@@ -156,34 +157,50 @@ export default function GestionCategorias() {
       {error && <p role="alert">{error} <button disabled={pendiente} onClick={recargar}>Actualizar lista</button></p>}
       {pendiente && <p role="status">Guardando cambios...</p>}
       {cargando && <p role="status">Cargando categorías...</p>}
-      <div className="admin-table-scroll" role="region" aria-label="Lista de categorías" tabIndex={0} style={{ backgroundColor: '#0a0a0a', borderRadius: '8px', border: '1px solid #333' }}>
-        <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left' }}>
+      <div className="admin-table-scroll" role="region" aria-label="Lista de categorías" tabIndex={0}>
+        <table className="admin-categories-table">
+          <colgroup>
+            <col className="category-reference-column" />
+            <col className="category-name-column" />
+            <col />
+            <col className="category-actions-column" />
+          </colgroup>
           <thead>
             <tr style={{ borderBottom: '1px solid #333', backgroundColor: 'rgba(255, 255, 255, 0.02)' }}>
-              <th style={{ ...thStyle, width: '80px' }}>ID</th>
-              <th style={thStyle}>Nombre</th>
-              <th style={thStyle}>Descripción</th>
-              <th style={{ ...thStyle, textAlign: 'right', width: '180px', whiteSpace: 'nowrap' }}>Acciones</th>
+              <th scope="col" style={thStyle}>Referencia</th>
+              <th scope="col" style={thStyle}>Nombre</th>
+              <th scope="col" style={thStyle}>Descripción</th>
+              <th scope="col" className="category-actions-heading" style={thStyle}>Acciones</th>
             </tr>
           </thead>
           <tbody>
             {categorias.length > 0 ? (
               categorias.map((categoria) => (
-                <tr key={categoria.id} style={{ borderBottom: '1px solid #222', transition: 'background-color 0.2s' }} onMouseOver={(e) => e.currentTarget.style.backgroundColor = 'rgba(255,255,255,0.02)'} onMouseOut={(e) => e.currentTarget.style.backgroundColor = 'transparent'}>
-                  <td style={{ padding: '1rem', color: '#6b7280' }}>#{categoria.id}</td>
+                <tr key={categoria.id}>
+                  <td>
+                    <span className="category-reference" title={String(categoria.id ?? 'Sin referencia')} aria-label={`Referencia completa: ${categoria.id ?? 'Sin referencia'}`}>
+                      {referenciaId(categoria.id)}
+                    </span>
+                  </td>
                   <td style={{ padding: '1rem', color: 'var(--text-main)', fontWeight: '600' }}>
-                    {categoria.nombre}{!categoria.activa && ' (Inactiva)'}
+                    <span className="category-preview category-name-preview" title={`${categoria.nombre}${!categoria.activa ? ' (Inactiva)' : ''}`}>
+                      {categoria.nombre}{!categoria.activa && ' (Inactiva)'}
+                    </span>
                   </td>
                   <td style={{ padding: '1rem', color: '#9ca3af', fontSize: '0.9rem' }}>
-                    {categoria.descripcion}
+                    <span className="category-preview category-description-preview" title={categoria.descripcion || 'Sin descripción'}>
+                      {categoria.descripcion || 'Sin descripción'}
+                    </span>
                   </td>
-                  <td style={{ ...tdStyle, textAlign: 'right', whiteSpace: 'nowrap' }}>
-                    <button disabled={pendiente || cargando || !!error} style={btnEditarStyle} onClick={() => handleEditar(categoria)}>
-                      Editar
-                    </button>
-                    <button disabled={pendiente || cargando || !!error} style={btnEliminarStyle} onClick={() => handleEliminar(categoria.id)}>
-                      Eliminar
-                    </button>
+                  <td>
+                    <div className="category-row-actions">
+                      <button disabled={pendiente || cargando || !!error} style={btnEditarStyle} onClick={() => handleEditar(categoria)}>
+                        Editar
+                      </button>
+                      <button disabled={pendiente || cargando || !!error} style={btnEliminarStyle} onClick={() => handleEliminar(categoria.id)}>
+                        Eliminar
+                      </button>
+                    </div>
                   </td>
                 </tr>
               ))
@@ -202,12 +219,11 @@ export default function GestionCategorias() {
 }
 
 // Estilos
-const thStyle = { padding: '1rem', color: '#d1d5db', fontWeight: '600', fontSize: '0.9rem', textTransform: 'uppercase', letterSpacing: '0.5px' };
-const tdStyle = { padding: '1rem', verticalAlign: 'middle' };
+const thStyle = { padding: 'var(--space-3)', color: 'var(--text-secondary)', fontWeight: '600', fontSize: '0.8rem', textTransform: 'uppercase', letterSpacing: '0.5px' };
 const inputGroupStyle = { display: 'flex', flexDirection: 'column', gap: '0.5rem' };
-const labelStyle = { color: '#d1d5db', fontSize: '0.95rem' };
-const inputStyle = { padding: '0.75rem', borderRadius: '4px', border: '1px solid #4b5563', backgroundColor: '#111', color: 'var(--text-main)', outline: 'none' };
-const btnGuardarStyle = { padding: '0.75rem 1.5rem', backgroundColor: 'var(--primary-green)', color: 'white', border: 'none', borderRadius: '4px', fontWeight: '600', cursor: 'pointer' };
-const btnCancelarStyle = { padding: '0.75rem 1.5rem', backgroundColor: 'transparent', color: '#d1d5db', border: '1px solid #4b5563', borderRadius: '4px', fontWeight: '600', cursor: 'pointer' };
-const btnEditarStyle = { padding: '0.4rem 0.8rem', backgroundColor: 'transparent', color: '#3b82f6', border: '1px solid #3b82f6', borderRadius: '4px', cursor: 'pointer', marginRight: '0.5rem', fontSize: '0.85rem' };
-const btnEliminarStyle = { padding: '0.4rem 0.8rem', backgroundColor: 'transparent', color: '#ef4444', border: '1px solid #ef4444', borderRadius: '4px', cursor: 'pointer', fontSize: '0.85rem' };
+const labelStyle = { color: 'var(--text-secondary)', fontSize: '0.95rem' };
+const inputStyle = { padding: 'var(--space-2)', borderRadius: 'var(--radius-control)', border: '1px solid var(--border-control)', backgroundColor: 'var(--bg-input)', color: 'var(--text-main)' };
+const btnGuardarStyle = { padding: '0.75rem 1.5rem', backgroundColor: 'var(--primary-green)', color: 'var(--text-on-primary)', border: '1px solid transparent', borderRadius: 'var(--radius-control)', fontWeight: '600', cursor: 'pointer' };
+const btnCancelarStyle = { padding: '0.75rem 1.5rem', backgroundColor: 'var(--bg-raised)', color: 'var(--text-secondary)', border: '1px solid var(--border-control)', borderRadius: 'var(--radius-control)', fontWeight: '600', cursor: 'pointer' };
+const btnEditarStyle = { padding: '0.6rem 0.9rem', backgroundColor: 'transparent', color: 'var(--text-secondary)', border: '1px solid var(--border-control)', borderRadius: 'var(--radius-control)', cursor: 'pointer' };
+const btnEliminarStyle = { padding: '0.6rem 0.9rem', backgroundColor: 'var(--status-error-bg)', color: 'var(--status-error)', border: '1px solid #a14b50', borderRadius: 'var(--radius-control)', cursor: 'pointer' };

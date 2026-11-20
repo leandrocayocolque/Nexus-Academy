@@ -23,61 +23,31 @@ export default function Dashboard() {
 
   return (
     <div>
-      <h2 style={{ color: 'var(--text-main)', margin: '0 0 2.5rem 0', fontSize: '2rem' }}>Resumen General</h2>
-      
+      <header className="admin-page-header">
+        <h2>Resumen general</h2>
+      </header>
       <div className="admin-summary-grid">
-        
-        {/* Tarjeta de Cursos */}
-        <div style={cardStyle}>
-          <h4 style={cardTitleStyle}>Cursos Activos</h4>
-          <p style={cardValueStyle}>{totalCursos}</p>
+        <div className="admin-summary-card">
+          <h3>Cursos activos</h3>
+          <p className="admin-summary-value">{totalCursos}</p>
         </div>
-
-        {/* Tarjeta de Categorías */}
-        <div style={cardStyle}>
-          <h4 style={cardTitleStyle}>Categorías Activas</h4>
-          <p style={cardValueStyle}>{totalCategorias}</p>
+        <div className="admin-summary-card">
+          <h3>Categorías activas</h3>
+          <p className="admin-summary-value">{totalCategorias}</p>
         </div>
-
-        {/* Tarjeta de Consultas (Cambia de color si hay mensajes pendientes) */}
-        <div style={{ 
-          ...cardStyle, 
-          borderLeftColor: consultasPendientes > 0 ? '#ef4444' : 'var(--primary-green)' 
-        }}>
-          <h4 style={cardTitleStyle}>Consultas Pendientes</h4>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
-            <p style={{ 
-              ...cardValueStyle, 
-              color: consultasPendientes > 0 ? '#ef4444' : 'var(--text-main)' 
-            }}>
-              {consultasPendientes}
-            </p>
-            
-            {/* Pequeño indicador visual (Puntito rojo) si hay mensajes sin leer */}
-            {consultasPendientes > 0 && (
-              <span style={{ 
-                display: 'block', 
-                width: '12px', 
-                height: '12px', 
-                backgroundColor: '#ef4444', 
-                borderRadius: '50%',
-                boxShadow: '0 0 8px #ef4444'
-              }}></span>
-            )}
-          </div>
+        <div className={`admin-summary-card${consultasPendientes > 0 ? ' admin-summary-pending' : ''}`}>
+          <h3>Consultas pendientes</h3>
+          <p className="admin-summary-value">{consultasPendientes}</p>
         </div>
-
       </div>
-
-      {/* Sección Informativa Adicional */}
-      <div className="admin-system-info" style={{ marginTop: '3rem', backgroundColor: '#0a0a0a', borderRadius: '8px', border: '1px solid #333' }}>
-        <h3 style={{ color: 'var(--text-main)', margin: '0 0 1rem 0' }}>Estado del Sistema</h3>
-        <ul style={{ color: '#9ca3af', lineHeight: '1.8', margin: 0, paddingLeft: '1.5rem' }}>
+      <div className="admin-system-info">
+        <h3>Estado del sistema</h3>
+        <ul>
           <li>
             El catálogo público cuenta actualmente con <strong>{totalCursos}</strong> opciones educativas distribuidas en <strong>{totalCategorias}</strong> áreas de estudio.
           </li>
           <li>
-            {consultasPendientes > 0 
+            {consultasPendientes > 0
               ? `Tenés ${consultasPendientes} mensajes nuevos esperando respuesta en la bandeja de entrada.`
               : 'Tu bandeja de consultas está al día, no hay mensajes pendientes.'}
           </li>
@@ -86,29 +56,3 @@ export default function Dashboard() {
     </div>
   );
 }
-
-// Estilos reutilizables
-const cardStyle = {
-  backgroundColor: '#0a0a0a',
-  padding: '1.5rem',
-  borderRadius: '8px',
-  border: '1px solid #333',
-  borderLeft: '4px solid var(--primary-green)',
-  boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.3)',
-  transition: 'transform 0.2s'
-};
-
-const cardTitleStyle = {
-  color: '#9ca3af',
-  margin: '0 0 0.5rem 0',
-  fontSize: '0.85rem',
-  textTransform: 'uppercase',
-  letterSpacing: '0.5px'
-};
-
-const cardValueStyle = {
-  color: 'var(--text-main)',
-  margin: 0,
-  fontSize: '2.5rem',
-  fontWeight: 'bold'
-};

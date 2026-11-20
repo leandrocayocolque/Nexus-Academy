@@ -1,11 +1,12 @@
 import { z } from 'zod';
-import { esquemaContrasena, esquemaCorreo, esquemaNombre } from '../auth/auth.schema.js';
+import { esquemaContrasena, esquemaCorreo, esquemaNombre, esquemaTelefono } from '../auth/auth.schema.js';
 
 export const esquemaActualizarPerfil = z
   .object({
     correo: esquemaCorreo.optional(),
     nombre: esquemaNombre.optional(),
-    apellido: esquemaNombre.optional()
+    apellido: esquemaNombre.optional(),
+    telefono: esquemaTelefono.optional()
   })
   .strict()
   .refine((datos) => Object.keys(datos).length > 0, {
