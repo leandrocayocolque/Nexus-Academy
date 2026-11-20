@@ -8,6 +8,7 @@ export function crearRutasUsuarios(servicio) {
 
   rutas.get('/me', manejadorAsync(controlador.obtenerPerfil));
   rutas.patch('/me', manejadorAsync(controlador.actualizarPerfil));
+  rutas.patch('/me/contrasena', manejadorAsync(controlador.cambiarContrasena));
 
   return rutas;
 }

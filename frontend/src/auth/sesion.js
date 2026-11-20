@@ -51,6 +51,11 @@ export function crearSesion({ baseUrl, fetchImpl } = {}) {
       token = null;
       publicar('anonima');
     },
+    actualizarUsuario(usuarioActualizado) { // <--- ACÁ LO AGREGÁS
+      if (snapshot.estado === 'autenticada' && identidadValida(usuarioActualizado)) {
+        publicar('autenticada', usuarioActualizado);
+      }
+    },
     async login({ correo, contrasena }) {
       const generacion = ++version;
       token = null;

@@ -11,11 +11,16 @@ export class ProveedorCorreoConsola extends ProveedorCorreo {
       { tipo, destinatario: datos.destinatario, consultaId: datos.consultaId },
       'Correo simulado; el contenido sensible fue omitido'
     );
+
+    if (datos.enlace && process.env.NODE_ENV === 'development') {
+      console.log(`\n🔗 [DEV] Enlace de recuperación para ${datos.destinatario}:\n${datos.enlace}\n`);
+    }
+
     return { id: `consola-${tipo.toLowerCase()}` };
   }
 
-  async enviarRestablecimientoContrasena({ destinatario, nombre, expiraEn }) {
-    return this.registrar('RESTABLECIMIENTO_CONTRASENA', { destinatario, nombre, expiraEn });
+  async enviarRestablecimientoContrasena({ destinatario, nombre, enlace, expiraEn }) {
+    return this.registrar('RESTABLECIMIENTO_CONTRASENA', { destinatario, nombre, enlace, expiraEn });
   }
 
   async enviarConfirmacionConsulta({ destinatario, nombre, consultaId }) {

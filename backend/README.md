@@ -55,13 +55,23 @@ El seed usa `ADMIN_DESARROLLO_CORREO`, `ADMIN_DESARROLLO_CONTRASENA`, `ADMIN_DES
 
 | Variable                                | Descripción                                                         |
 | --------------------------------------- | ------------------------------------------------------------------- |
-| `EMAIL_PROVIDER`                        | `console` o `nodemailer`. Desarrollo y pruebas usan consola segura. |
+| `EMAIL_PROVIDER`                        | `console` o `nodemailer`. En desarrollo, SMTP requiere `nodemailer` explícito; pruebas siempre usan consola. |
 | `SMTP_HOST`, `SMTP_PORT`, `SMTP_SECURE` | Conexión SMTP para Nodemailer.                                      |
 | `SMTP_USER`, `SMTP_PASS`                | Credenciales SMTP.                                                  |
 | `EMAIL_FROM`                            | Remitente visible.                                                  |
 | `EMAIL_NOTIFICATION_TO`                 | Destino interno para nuevas consultas.                              |
 
 El proveedor de consola registra únicamente metadatos. Nunca registra tokens de restablecimiento ni enlaces completos.
+
+#### Activar notificaciones reales y diagnosticar
+
+1. Configure `EMAIL_PROVIDER=nodemailer` para habilitar SMTP también en desarrollo. Sin proveedor explícito, desarrollo usa consola; `EMAIL_PROVIDER=console` usa consola en cualquier ambiente y pruebas siempre usan consola, aunque se configure SMTP.
+2. Complete `SMTP_HOST`, `SMTP_PORT`, `SMTP_USER`, `SMTP_PASS`, `EMAIL_FROM` y `EMAIL_NOTIFICATION_TO` con los valores de su proveedor. El último es el buzón interno que recibirá las consultas. Configure `SMTP_SECURE` según el proveedor: `true` para TLS implícito (habitualmente puerto 465); `false` para conexiones con STARTTLS (habitualmente 587). Si se omite, se deriva del puerto 465. No publique credenciales ni las incluya en registros.
+3. Reinicie el backend tras cambiar la configuración. El transporte se carga recién al primer envío, no al arrancar: iniciar correctamente no comprueba SMTP.
+
+SMTP explícito incompleto queda no disponible; nunca se sustituye silenciosamente por consola. Producción sin configuración SMTP completa también queda no disponible. Si no llega una notificación, verifique proveedor seleccionado, configuración completa, autenticación y remitente permitido en su proveedor; revise los registros seguros del backend y los eventos del proveedor, además de spam, cuarentena y rebotes del buzón interno.
+
+Una consulta exitosa confirma que quedó guardada, no que llegó un correo. El servicio intenta notificar sólo al buzón interno después de persistir; si SMTP falla, registra una advertencia y conserva la consulta para su gestión administrativa. La aceptación por el transporte SMTP tampoco garantiza entrega en bandeja de entrada; esa comprobación requiere una prueba real autorizada y acceso al buzón/proveedor.
 
 ### Imágenes
 

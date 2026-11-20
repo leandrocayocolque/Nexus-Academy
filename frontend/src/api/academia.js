@@ -104,6 +104,91 @@ function camposCategoria(datos) {
     .map(campo => [campo, datos[campo]]));
 }
 
+function prepararNegocio(datos) {
+  const detalles = {};
+
+  const nombre = typeof datos.nombre === 'string' ? datos.nombre.trim() : '';
+  if (nombre.length < 1 || nombre.length > 150) {
+    detalles.nombre = 'El nombre debe tener entre 1 y 150 caracteres.';
+  }
+
+  const textoOpcional = (campo, max, etiqueta) => {
+    if (datos[campo] == null) return null;
+    const valor = String(datos[campo]).trim();
+    if (!valor) return null;
+    if (valor.length > max) {
+      detalles[campo] = `${etiqueta} no puede superar ${max} caracteres.`;
+    }
+    return valor;
+  };
+
+  const descripcion = textoOpcional('descripcion', 2000, 'La descripción');
+  const direccion = textoOpcional('direccion', 300, 'La dirección');
+  const telefono = textoOpcional('telefono', 50, 'El teléfono');
+
+  let correo = null;
+  if (datos.correo != null && String(datos.correo).trim() !== '') {
+    correo = String(datos.correo).trim().toLowerCase();
+    if (correo.length > 254 || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(correo)) {
+      detalles.correo = 'Ingresá un correo electrónico válido.';
+    }
+  }
+
+  let enlacesSociales = null;
+  if (datos.enlacesSociales && typeof datos.enlacesSociales === 'object') {
+    const entradas = Object.entries(datos.enlacesSociales);
+    if (entradas.length > 20) {
+      detalles.enlacesSociales = 'No se permiten más de 20 enlaces sociales.';
+    } else if (entradas.length > 0) {
+      enlacesSociales = {};
+      for (const [red, url] of entradas) {
+        try {
+          new URL(url);
+          enlacesSociales[red.trim()] = url.trim();
+        } catch {
+          detalles.enlacesSociales = `La URL de "${red}" no es válida (debe incluir http:// o https://).`;
+          break;
+        }
+      }
+    }
+  }
+
+  let horariosAtencion = null;
+  if (datos.horariosAtencion && typeof datos.horariosAtencion === 'object') {
+    const entradas = Object.entries(datos.horariosAtencion);
+    if (entradas.length > 20) {
+      detalles.horariosAtencion = 'No se permiten más de 20 horarios.';
+    } else if (entradas.length > 0) {
+      horariosAtencion = {};
+      for (const [dia, franja] of entradas) {
+        const val = String(franja).trim();
+        if (val.length < 1 || val.length > 100) {
+          detalles.horariosAtencion = `El horario de "${dia}" debe tener entre 1 y 100 caracteres.`;
+          break;
+        }
+        horariosAtencion[dia.trim()] = val;
+      }
+    }
+  }
+
+  if (Object.keys(detalles).length) {
+    throw new ErrorApi('Revisá los datos del comercio.', {
+      code: 'VALIDACION_NEGOCIO',
+      detalles,
+    });
+  }
+
+  return {
+    nombre,
+    descripcion,
+    direccion,
+    telefono,
+    correo,
+    enlacesSociales,
+    horariosAtencion,
+  };
+}
+
 export function crearApiAcademia(solicitar = cliente) {
   const listarCursosAdmin = (query = {}, { signal } = {}) =>
     solicitar('/admin/cursos', { signal, query });
@@ -111,6 +196,11 @@ export function crearApiAcademia(solicitar = cliente) {
     solicitar('/cursos', { signal, query });
   const listarCategorias = (query = {}, { signal } = {}) =>
     solicitar('/categorias', { signal, query });
+
+  const listarPromocionesAdmin = (query = {}, { signal } = {}) =>
+    solicitar('/admin/promociones', { signal, query });
+  const listarPromociones = (query = {}, { signal } = {}) =>
+    solicitar('/promociones', { signal, query });
 
   const listarCategoriasAdmin = (query = {}, { signal } = {}) =>
     solicitar('/admin/categorias', { signal, query });
@@ -134,7 +224,29 @@ export function crearApiAcademia(solicitar = cliente) {
       }
       return resumen;
     },
+    listarPromocionesAdmin,
+    cargarTodasPromocionesAdmin: (options) => cargarPaginas(listarPromocionesAdmin, options),
+    crearPromocionAdmin: (datos, { signal } = {}) =>
+      solicitar('/admin/promociones', { method: 'POST', body: prepararPromocion(datos), signal }),
+    actualizarPromocionAdmin: (id, datos, { signal } = {}) =>
+      solicitar(`/admin/promociones/${encodeURIComponent(id)}`, { method: 'PATCH', body: prepararPromocion(datos), signal }),
+    eliminarPromocionAdmin: (id, { signal } = {}) =>
+      solicitar(`/admin/promociones/${encodeURIComponent(id)}`, { method: 'DELETE', signal }),
+    cargarPromocionesActivas: (options) => cargarPaginas(listarPromociones, options),
+    cargarCursosDestacados: (options) => cargarPaginas(
+      (query, opciones) => listarCursos({ ...query, destacado: true }, opciones), options,
+    ),
     listarCursosAdmin,
+    obtenerCursoAdmin: (id, { signal } = {}) =>
+      solicitar(`/admin/cursos/${encodeURIComponent(id)}`, { signal }),
+    eliminarImagenCursoAdmin: (id, imagenId, { signal } = {}) =>
+      solicitar(`/admin/cursos/${encodeURIComponent(id)}/imagenes/${encodeURIComponent(imagenId)}`, { method: 'DELETE', signal }),
+    subirImagenesCursoAdmin: (id, archivos, { signal } = {}) => {
+      validarImagenesCurso(archivos);
+      const body = new FormData();
+      archivos.forEach(archivo => body.append('imagenes', archivo));
+      return solicitar(`/admin/cursos/${encodeURIComponent(id)}/imagenes`, { method: 'POST', body, signal });
+    },
     cargarTodosCursosAdmin: (options) => cargarPaginas(listarCursosAdmin, options),
     crearCursoAdmin: (datos, { signal } = {}) =>
       solicitar('/admin/cursos', { method: 'POST', body: prepararCurso(datos), signal }),
@@ -178,6 +290,14 @@ export function crearApiAcademia(solicitar = cliente) {
     },
     eliminarConsultaAdmin: (id, { signal } = {}) =>
       solicitar(`/admin/consultas/${encodeURIComponent(id)}`, { method: 'DELETE', signal }),
+    obtenerNegocio: ({ signal } = {}) =>
+      solicitar('/academia', { signal }),
+    actualizarNegocioAdmin: (datos, { signal } = {}) =>
+      solicitar('/admin/academia', {
+        method: 'PUT',
+        body: prepararNegocio(datos),
+        signal,
+      }),
     listarCursos,
     listarCategorias,
     crearConsulta: async (datos) =>
@@ -195,6 +315,45 @@ function fechaLocal(fecha) {
   if (fecha == null || !Number.isFinite(d.getTime())) return '';
   const pad = (n, longitud = 2) => String(n).padStart(longitud, '0');
   return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}:${pad(d.getSeconds())}.${pad(d.getMilliseconds(), 3)}`;
+}
+
+export const estadosPromocion = Object.freeze({
+  ACTIVA: 'Activa', INACTIVA: 'Inactiva', EXPIRADA: 'Expirada',
+});
+
+export function formularioPromocion(promocion = {}) {
+  return {
+    id: promocion.id ?? null, titulo: promocion.titulo ?? '', descripcion: promocion.descripcion ?? '',
+    porcentajeDescuento: String(promocion.porcentajeDescuento ?? ''), estado: promocion.estado ?? 'ACTIVA',
+    cursoId: promocion.cursoId ?? '', fechaInicio: fechaLocal(promocion.fechaInicio), fechaFin: fechaLocal(promocion.fechaFin),
+  };
+}
+
+// Fechas sin límite se envían como null; datetime-local se convierte a UTC.
+// La API no admite imagenURL ni otros campos fuera de este contrato estricto.
+export function prepararPromocion(datos) {
+  const detalles = {};
+  const titulo = String(datos.titulo ?? '').trim();
+  const descripcion = String(datos.descripcion ?? '').trim() || null;
+  if (titulo.length < 3 || titulo.length > 180) detalles.titulo = 'Debe tener entre 3 y 180 caracteres.';
+  if (descripcion?.length > 2000) detalles.descripcion = 'Máximo 2000 caracteres.';
+  const porcentaje = String(datos.porcentajeDescuento ?? '').trim();
+  if (!/^\d+$/.test(porcentaje) || Number(porcentaje) > 100) detalles.porcentajeDescuento = 'Ingresá un entero entre 0 y 100.';
+  if (!Object.hasOwn(estadosPromocion, datos.estado)) detalles.estado = 'Seleccioná un estado válido.';
+  const cursoId = String(datos.cursoId ?? '').trim() || null;
+  if (cursoId?.length > 100) detalles.cursoId = 'El curso no es válido.';
+  const fechas = {};
+  for (const campo of ['fechaInicio', 'fechaFin']) {
+    const valor = datos[campo] ?? '';
+    if (valor === '') { fechas[campo] = null; continue; }
+    const partes = /^(\d{4}-\d{2}-\d{2}T\d{2}:\d{2})(?::(\d{2})(?:\.(\d{1,3}))?)?$/.exec(valor);
+    const normalizada = partes ? `${partes[1]}:${partes[2] ?? '00'}.${(partes[3] ?? '').padEnd(3, '0')}` : '';
+    if (!partes || fechaLocal(normalizada) !== normalizada) detalles[campo] = 'Ingresá una fecha y hora local válidas.';
+    else fechas[campo] = new Date(normalizada).toISOString();
+  }
+  if (fechas.fechaInicio && fechas.fechaFin && fechas.fechaInicio > fechas.fechaFin) detalles.fechaFin = 'Debe ser posterior o igual al inicio.';
+  if (Object.keys(detalles).length) throw new ErrorApi('Revisá los campos de la promoción.', { detalles });
+  return { titulo, descripcion, porcentajeDescuento: Number(porcentaje), estado: datos.estado, cursoId, ...fechas };
 }
 
 export function formularioCurso(curso = {}) {
@@ -266,6 +425,52 @@ export async function guardarCursoConImagen(api, { id, datos, archivo, guardado,
   } catch (errorImagen) {
     signal?.throwIfAborted();
     return { guardado, errorImagen };
+  }
+}
+
+export function validarImagenesCurso(archivos, existentes = 0) {
+  if (!Array.isArray(archivos) || archivos.length < 1 || archivos.length > 5) {
+    throw new ErrorApi('Seleccioná entre 1 y 5 imágenes por envío.');
+  }
+  if (existentes + archivos.length > 10) throw new ErrorApi('El curso admite hasta 10 imágenes en total.');
+  archivos.forEach(validarImagenCurso);
+}
+
+// Un GET muestra el estado observado, no prueba que una petición perdida haya
+// terminado. No hay clave de idempotencia ni asociación archivo/imagen en la API.
+export async function reconciliarImagenesCurso(api, resultado, { signal } = {}) {
+  try {
+    const actual = await api.obtenerCursoAdmin(resultado.guardado.id, { signal });
+    if (actual?.id !== resultado.guardado.id || !Array.isArray(actual.imagenes)) {
+      throw new ErrorApi('No se pudo confirmar la lista de imágenes.');
+    }
+    return { ...resultado, guardado: { ...resultado.guardado, imagenes: actual.imagenes }, reconciliado: true, errorReconciliacion: null };
+  } catch (errorReconciliacion) {
+    signal?.throwIfAborted();
+    return { ...resultado, reconciliado: false, errorReconciliacion };
+  }
+}
+
+export async function guardarCursoConImagenes(api, { id, datos, archivos = [], guardado, onGuardado, signal, anterior }) {
+  signal?.throwIfAborted();
+  if (anterior?.errorImagen) {
+    anterior = await reconciliarImagenesCurso(api, anterior, { signal });
+    guardado = anterior.guardado;
+    if (anterior.incierto || !anterior.reconciliado) return anterior;
+  }
+  if (archivos.length) validarImagenesCurso(archivos, (guardado ?? datos)?.imagenes?.length ?? 0);
+  ({ guardado } = await guardarCursoConImagen(api, { id, datos, guardado, onGuardado, signal }));
+  if (!archivos.length) return { guardado, errorImagen: null };
+  try {
+    const imagenes = await api.subirImagenesCursoAdmin(guardado.id, archivos, { signal });
+    if (!Array.isArray(imagenes) || imagenes.length !== archivos.length || imagenes.some(img => !img?.id)) {
+      throw new ErrorApi('La respuesta de la subida no permite confirmar todas las imágenes.');
+    }
+    return { guardado: { ...guardado, imagenes: [...(guardado.imagenes ?? []), ...imagenes] }, errorImagen: null };
+  } catch (errorImagen) {
+    signal?.throwIfAborted();
+    const rechazo = errorImagen.status >= 400 && errorImagen.status < 500 && errorImagen.status !== 408;
+    return reconciliarImagenesCurso(api, { guardado, errorImagen, incierto: !rechazo }, { signal });
   }
 }
 

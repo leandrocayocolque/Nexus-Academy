@@ -6,8 +6,14 @@ export default function SesionProvider({ children }) {
   const [sesion] = useState(() => crearSesion());
   const snapshot = useSyncExternalStore(sesion.subscribe, sesion.getSnapshot);
   return (
-    <SesionContext.Provider value={{ ...snapshot, login: sesion.login, logout: sesion.logout,
-      academia: sesion.academia, solicitar: sesion.solicitar }}>
+    <SesionContext.Provider value={{
+      ...snapshot,
+      login: sesion.login,
+      logout: sesion.logout,
+      actualizarUsuario: sesion.actualizarUsuario,
+      academia: sesion.academia,
+      solicitar: sesion.solicitar
+    }}>
       {children}
     </SesionContext.Provider>
   );

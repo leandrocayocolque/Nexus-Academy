@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { academia, nivelesCurso, modalidadesCurso } from '../api/academia';
+import './PublicResponsive.css';
 
 export default function Catalogo() {
   const navigate = useNavigate();
@@ -73,15 +74,16 @@ export default function Catalogo() {
   const totalPaginas = Math.ceil(cursosFiltrados.length / itemsPorPagina);
 
   return (
-    <div style={{ display: 'flex', gap: '3rem', padding: '2rem', maxWidth: '1400px', margin: '0 auto', flexWrap: 'wrap' }}>
+    <div className="public-catalogue">
       
       {/* Columna Izquierda: Buscador y Filtros */}
-      <aside style={{ width: '250px', flexShrink: 0 }}>
+      <aside className="public-catalogue-filters">
         
         <div style={{ marginBottom: '2rem' }}>
           <input 
             type="text" 
-            placeholder="Buscar curso..." 
+            placeholder="Buscar curso..."
+            aria-label="Buscar curso"
             value={busqueda}
             onChange={(e) => { setBusqueda(e.target.value); setPaginaActual(1); }}
             style={{ 
@@ -117,7 +119,7 @@ export default function Catalogo() {
       </aside>
 
       {/* Columna Derecha: Grilla de Cursos */}
-      <main style={{ flex: 1, display: 'flex', flexDirection: 'column' }}>
+      <main className="public-catalogue-results" style={{ display: 'flex', flexDirection: 'column' }}>
         {cargando && <p role="status">Cargando catálogo...</p>}
         {errorCursos && <p role="alert">{errorCursos}</p>}
         
@@ -138,7 +140,7 @@ export default function Catalogo() {
 
         {!cargando && !errorCursos && (cursosPaginados.length > 0 ? (
           <>
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(320px, 1fr))', gap: '2rem', alignContent: 'start', flex: 1 }}>
+            <div className="public-course-grid" style={{ alignContent: 'start', flex: 1 }}>
               {cursosPaginados.map((curso) => (
                 <article 
                   key={curso.id} 
@@ -193,7 +195,7 @@ export default function Catalogo() {
 
             {/* Controles de Paginación al pie de la grilla */}
             {totalPaginas > 1 && (
-              <div style={{ marginTop: '3rem', paddingTop: '1.5rem', borderTop: '1px solid #333', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+              <div className="public-pagination" style={{ marginTop: '3rem', paddingTop: '1.5rem', borderTop: '1px solid #333', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                 <span style={{ color: '#9ca3af', fontSize: '0.9rem' }}>
                   Página {paginaActual} de {totalPaginas} ({cursosFiltrados.length} resultados)
                 </span>
@@ -217,7 +219,7 @@ export default function Catalogo() {
             )}
           </>
         ) : (
-          <div style={{ textAlign: 'center', padding: '4rem', color: '#9ca3af', backgroundColor: 'var(--bg-card)', borderRadius: '8px', border: '1px dashed #4b5563' }}>
+          <div className="public-catalogue-empty" style={{ textAlign: 'center', color: '#9ca3af', backgroundColor: 'var(--bg-card)', borderRadius: '8px', border: '1px dashed #4b5563' }}>
             <h3 style={{ fontSize: '1.5rem', color: 'var(--text-main)', margin: '0 0 1rem 0' }}>No encontramos cursos</h3>
             <p style={{ margin: 0 }}>{cursos.length === 0 ? 'Por el momento no hay cursos disponibles.' : 'Intentá desmarcar algunos filtros o usar otros términos de búsqueda.'}</p>
           </div>

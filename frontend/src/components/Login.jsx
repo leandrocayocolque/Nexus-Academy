@@ -1,5 +1,6 @@
 import { useRef, useState } from 'react';
-import { Navigate, useLocation } from 'react-router-dom';
+import { Link, Navigate, useLocation } from 'react-router-dom';
+import './AdminResponsive.css';
 import { useSesion } from '../auth/SesionContext.js';
 import { destinoAdmin } from '../auth/sesion.js';
 
@@ -32,8 +33,7 @@ export default function Login() {
       ? 'Correo o contraseña incorrectos. Intentá nuevamente.'
       : error?.message;
   return (
-    <section style={{ maxWidth: '440px', margin: '4rem auto', padding: '2rem',
-      background: 'var(--bg-card)', border: '1px solid #333', borderRadius: '12px' }}>
+    <section className="admin-login">
       <h1>Acceso de administración</h1>
       <p>Iniciá sesión para gestionar la academia.</p>
       <form onSubmit={enviar} aria-busy={pendiente} style={{ display: 'grid', gap: '1rem' }}>
@@ -50,7 +50,13 @@ export default function Login() {
         </button>
         {pendiente && <button type="button" onClick={logout}>Cancelar acceso</button>}
       </form>
+      <div style={{ marginTop: '1rem', textAlign: 'right' }}>
+        <Link to="/recuperar-contrasena" style={{ color: 'var(--primary-green)', fontSize: '0.9rem', textDecoration: 'none' }}>
+          ¿Olvidaste tu contraseña?
+        </Link>
+      </div>
       <p>Por seguridad, al recargar la página deberás iniciar sesión nuevamente.</p>
     </section>
+
   );
 }

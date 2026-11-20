@@ -1,0 +1,391 @@
+/* Scoped admin navigation, shell descendants and standalone login rules. */
+.admin-navbar,
+.admin-navbar * {
+  box-sizing: border-box;
+  min-width: 0;
+}
+
+.admin-navbar {
+  padding: 1.25rem clamp(1rem, 4vw, 4rem);
+  flex-wrap: wrap;
+  gap: 1rem 2rem;
+  overflow-wrap: anywhere;
+}
+
+.admin-navbar-links {
+  max-width: 100%;
+  padding: 0;
+  flex-wrap: wrap;
+  gap: 0.75rem 2.5rem;
+}
+
+.admin-navbar-links a,
+.admin-navbar-links button {
+  display: inline-flex;
+  align-items: center;
+  min-height: 44px;
+  max-width: 100%;
+}
+
+.admin-navbar a:focus-visible,
+.admin-navbar button:focus-visible {
+  outline: 2px solid var(--primary-green);
+  outline-offset: 3px;
+}
+
+.admin-shell,
+.admin-shell *,
+.admin-login,
+.admin-login * {
+  box-sizing: border-box;
+}
+
+.admin-shell {
+  display: flex;
+  min-height: 80vh;
+  width: 100%;
+  max-width: 1400px;
+  margin: 2rem auto;
+  gap: 2rem;
+  padding: 0 2rem;
+}
+
+.admin-sidebar {
+  width: 250px;
+  flex-shrink: 0;
+  background: var(--bg-card);
+  padding: 1.5rem;
+  border-radius: 12px;
+  border: 1px solid #333;
+  align-self: start;
+  position: sticky;
+  top: 100px;
+}
+
+.admin-content {
+  flex: 1;
+  min-width: 0;
+  background: var(--bg-card);
+  padding: 2.5rem;
+  border-radius: 12px;
+  border: 1px solid #333;
+  overflow-wrap: anywhere;
+}
+
+.admin-content > div,
+.admin-content form,
+.admin-content fieldset,
+.admin-content label,
+.admin-summary-grid > * {
+  min-width: 0;
+}
+
+.admin-content fieldset {
+  margin: 0;
+}
+
+.admin-content input:not([type='checkbox']):not([type='radio']),
+.admin-content select,
+.admin-content textarea,
+.admin-login input {
+  min-width: 0;
+  max-width: 100%;
+  width: 100%;
+}
+
+.admin-content textarea {
+  resize: vertical;
+}
+
+.admin-content img {
+  max-width: 100%;
+}
+
+.admin-content button,
+.admin-login button {
+  min-height: 44px;
+  max-width: 100%;
+  white-space: normal;
+  overflow-wrap: anywhere;
+}
+
+.admin-shell a:focus-visible,
+.admin-shell button:focus-visible,
+.admin-shell input:focus-visible,
+.admin-shell select:focus-visible,
+.admin-shell textarea:focus-visible,
+.admin-table-scroll:focus-visible,
+.admin-login input:focus-visible,
+.admin-login button:focus-visible {
+  outline: 2px solid var(--primary-green);
+  outline-offset: 3px;
+}
+
+.admin-page-header {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  align-items: center;
+  gap: 1rem;
+  margin-bottom: 2rem;
+}
+
+.admin-page-header > * {
+  min-width: 0;
+}
+
+.admin-summary-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(200px, 100%), 1fr));
+  gap: 1.5rem;
+}
+
+.admin-system-info,
+.admin-form-panel {
+  padding: 2rem;
+}
+
+.admin-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1rem;
+  justify-content: flex-end;
+  min-width: 0;
+}
+
+.admin-course-images {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(140px, 100%), 1fr));
+  gap: 1rem;
+}
+
+.admin-course-images > div {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 0.5rem;
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+/* Min-width: 0 on the shell's flex child keeps this overflow local. */
+.admin-table-scroll {
+  min-width: 0;
+  max-width: 100%;
+  overflow-x: auto;
+  overscroll-behavior-x: contain;
+}
+
+.admin-table-scroll table {
+  min-width: 640px;
+}
+
+.admin-table-scroll th,
+.admin-table-scroll td {
+  overflow-wrap: anywhere;
+}
+
+.admin-pagination {
+  padding: 1rem;
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  align-items: center;
+  gap: 1rem;
+}
+
+.admin-modal-overlay {
+  overflow-y: auto;
+  overscroll-behavior: contain;
+}
+
+.admin-message-panel {
+  min-width: 0;
+  max-height: calc(100dvh - 2rem);
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  padding: 2rem;
+  overflow-wrap: anywhere;
+}
+
+.admin-message-meta {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  gap: 1rem;
+}
+
+.admin-message-meta > * {
+  min-width: 0;
+}
+
+.admin-login {
+  width: calc(100% - 2rem);
+  max-width: 440px;
+  margin: 4rem auto;
+  padding: 2rem;
+  background: var(--bg-card);
+  border: 1px solid #333;
+  border-radius: 12px;
+  overflow-wrap: anywhere;
+}
+
+.admin-login input {
+  min-height: 44px;
+  padding: 0.75rem;
+  border: 1px solid #4b5563;
+  border-radius: 4px;
+  background: #111;
+  color: var(--text-main);
+  font: inherit;
+}
+
+.admin-promotions button {
+  padding: 0.65rem 1rem;
+  border: 1px solid var(--primary-green);
+  border-radius: 6px;
+  background: #111;
+  color: var(--text-main);
+  font: inherit;
+  cursor: pointer;
+}
+
+.admin-promotions button:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
+.admin-promotion-form,
+.admin-promotion-list > li,
+.admin-promotion-confirm {
+  background: #0a0a0a;
+  border: 1px solid #333;
+  border-radius: 8px;
+}
+
+.admin-promotion-form {
+  max-width: 720px;
+}
+
+.admin-promotion-form fieldset {
+  display: grid;
+  gap: 0.75rem;
+  padding: 1rem;
+  border: 1px solid #4b5563;
+}
+
+.admin-promotion-form input,
+.admin-promotion-form select,
+.admin-promotion-form textarea {
+  padding: 0.75rem;
+  min-height: 44px;
+  background: #111;
+  color: var(--text-main);
+  border: 1px solid #4b5563;
+  border-radius: 4px;
+  font: inherit;
+}
+
+.admin-promotion-form .admin-actions {
+  margin-top: 1.5rem;
+}
+
+.admin-promotion-list {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 300px), 1fr));
+  gap: 1rem;
+  padding: 0;
+  list-style: none;
+}
+
+.admin-promotion-list > li,
+.admin-promotion-confirm {
+  padding: 1rem;
+  min-width: 0;
+}
+
+.admin-promotion-description {
+  white-space: pre-wrap;
+}
+
+/* Stack navigation at tablet widths instead of squeezing CRUD content. */
+@media (max-width: 1024px) {
+  .admin-shell {
+    flex-direction: column;
+    gap: 1.5rem;
+    padding: 0 1.5rem;
+  }
+
+  .admin-sidebar {
+    position: static;
+    width: 100%;
+  }
+
+  .admin-sidebar nav {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 0.5rem;
+  }
+
+  .admin-content {
+    width: 100%;
+    padding: 1.5rem;
+  }
+}
+
+@media (max-width: 600px) {
+  .admin-navbar {
+    gap: 0.5rem;
+  }
+
+  .admin-navbar-links {
+    width: 100%;
+    justify-content: space-between;
+    gap: 0.25rem 0.75rem;
+  }
+
+  .admin-shell {
+    margin: 1rem auto;
+    padding: 0 0.75rem;
+    gap: 1rem;
+  }
+
+  .admin-sidebar,
+  .admin-content,
+  .admin-form-panel,
+  .admin-system-info,
+  .admin-message-panel {
+    padding: 1rem;
+  }
+
+  .admin-sidebar nav {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 0;
+  }
+
+  .admin-page-header {
+    align-items: stretch;
+  }
+
+  .admin-page-header > button,
+  .admin-actions > button {
+    flex: 1 1 100%;
+    margin-right: 0;
+  }
+
+  .admin-pagination > *,
+  .admin-pagination .admin-actions {
+    width: 100%;
+  }
+
+  .admin-content input,
+  .admin-content select,
+  .admin-content textarea {
+    font-size: 1rem;
+  }
+
+  .admin-login {
+    margin: 2rem auto;
+    padding: 1.25rem;
+  }
+}

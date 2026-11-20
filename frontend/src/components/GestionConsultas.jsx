@@ -119,7 +119,7 @@ export default function GestionConsultas() {
       {cargando && <p role="status">Cargando consultas...</p>}
       {pendiente && <p role="status">Actualizando consulta...</p>}
       {/* TABLA PRINCIPAL DE CONSULTAS */}
-      <div style={{ backgroundColor: '#0a0a0a', borderRadius: '8px', border: '1px solid #333', overflowX: 'auto' }}>
+      <div className="admin-table-scroll" role="region" aria-label="Lista de consultas" tabIndex={0} style={{ backgroundColor: '#0a0a0a', borderRadius: '8px', border: '1px solid #333' }}>
         <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left' }}>
           <thead>
             <tr style={{ borderBottom: '1px solid #333', backgroundColor: 'rgba(255, 255, 255, 0.02)' }}>
@@ -183,7 +183,7 @@ export default function GestionConsultas() {
 
       {/* VENTANA MODAL PARA LEER EL MENSAJE COMPLETO */}
       {mensajeActivo && (
-        <div style={{
+        <div className="admin-modal-overlay" style={{
           position: 'fixed',
           top: 0,
           left: 0,
@@ -196,9 +196,8 @@ export default function GestionConsultas() {
           zIndex: 1000,
           padding: '1rem'
         }}>
-          <div style={{
+          <div className="admin-message-panel" style={{
             backgroundColor: '#0a0a0a',
-            padding: '2rem',
             borderRadius: '8px',
             border: '1px solid var(--primary-green)',
             maxWidth: '600px',
@@ -209,7 +208,7 @@ export default function GestionConsultas() {
               {mensajeActivo.asunto}
             </h3>
             
-            <div style={{ display: 'flex', justifyContent: 'space-between', borderBottom: '1px solid #333', paddingBottom: '1rem', marginBottom: '1.5rem' }}>
+            <div className="admin-message-meta" style={{ borderBottom: '1px solid #333', paddingBottom: '1rem', marginBottom: '1.5rem' }}>
               <div>
                 <span style={{ color: 'var(--text-main)', fontWeight: 'bold', display: 'block' }}>{mensajeActivo.nombre}</span>
                 <span style={{ color: '#9ca3af', fontSize: '0.9rem' }}>{mensajeActivo.correo}</span>
@@ -224,7 +223,7 @@ export default function GestionConsultas() {
               {mensajeActivo.mensaje}
             </div>
             
-            <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '1rem', marginTop: '2rem' }}>
+            <div className="admin-actions" style={{ marginTop: '2rem' }}>
               <button disabled={pendiente || !!error} onClick={() => handleEliminar(mensajeActivo.id)} style={btnEliminarStyle}>
                 Eliminar Mensaje
               </button>

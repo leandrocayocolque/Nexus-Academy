@@ -25,7 +25,7 @@ export default function Dashboard() {
     <div>
       <h2 style={{ color: 'var(--text-main)', margin: '0 0 2.5rem 0', fontSize: '2rem' }}>Resumen General</h2>
       
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '1.5rem' }}>
+      <div className="admin-summary-grid">
         
         {/* Tarjeta de Cursos */}
         <div style={cardStyle}>
@@ -70,7 +70,7 @@ export default function Dashboard() {
       </div>
 
       {/* Sección Informativa Adicional */}
-      <div style={{ marginTop: '3rem', padding: '2rem', backgroundColor: '#0a0a0a', borderRadius: '8px', border: '1px solid #333' }}>
+      <div className="admin-system-info" style={{ marginTop: '3rem', backgroundColor: '#0a0a0a', borderRadius: '8px', border: '1px solid #333' }}>
         <h3 style={{ color: 'var(--text-main)', margin: '0 0 1rem 0' }}>Estado del Sistema</h3>
         <ul style={{ color: '#9ca3af', lineHeight: '1.8', margin: 0, paddingLeft: '1.5rem' }}>
           <li>

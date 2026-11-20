@@ -19,7 +19,11 @@ export function crearProveedorCorreo({
   registrador,
   cargarNodemailer = () => import('nodemailer')
 }) {
-  if (ambiente === 'development' || ambiente === 'test' || configuracion.proveedor === 'console') {
+  if (
+    ambiente === 'test' ||
+    configuracion.proveedor === 'console' ||
+    (ambiente === 'development' && !configuracion.proveedor)
+  ) {
     return new ProveedorCorreoConsola({ registrador });
   }
 

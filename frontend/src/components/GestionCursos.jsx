@@ -1,7 +1,7 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { toast } from 'sonner';
 import { useSesion } from '../auth/SesionContext';
-import { formularioCurso, guardarCursoConImagen, modalidadesCurso, nivelesCurso, validarImagenCurso } from '../api/academia';
+import { formularioCurso, guardarCursoConImagenes, reconciliarImagenesCurso, modalidadesCurso, nivelesCurso, validarImagenesCurso } from '../api/academia';
 
 export default function GestionCursos() {
   const { academia } = useSesion();
@@ -13,15 +13,18 @@ export default function GestionCursos() {
   const [detalles, setDetalles] = useState({});
   const [mostrarFormulario, setMostrarFormulario] = useState(false);
   const [formData, setFormData] = useState(formularioCurso);
-  const [archivo, setArchivo] = useState(null);
-  const [preview, setPreview] = useState('');
+  const [archivos, setArchivos] = useState([]);
+  const [previews, setPreviews] = useState([]);
+  const [resultadoImagenes, setResultadoImagenes] = useState(null);
+  const [imagenAEliminar, setImagenAEliminar] = useState(null);
+  const [imagenesDesactualizadas, setImagenesDesactualizadas] = useState(false);
   const [guardado, setGuardado] = useState(null);
   const [paginaActual, setPaginaActual] = useState(1);
   const [itemsPorPagina, setItemsPorPagina] = useState(10);
   const vida = useRef(null);
   const ocupado = useRef(false);
   const aceptado = useRef(null);
-  const urlPreview = useRef('');
+  const urlsPreview = useRef([]);
 
   useEffect(() => {
     const controller = new AbortController();
@@ -38,15 +41,15 @@ export default function GestionCursos() {
     });
     return () => {
       controller.abort();
-      URL.revokeObjectURL(urlPreview.current);
+      urlsPreview.current.forEach(url => URL.revokeObjectURL(url));
     };
   }, [academia]);
 
-  const seleccionarArchivo = (file) => {
-    URL.revokeObjectURL(urlPreview.current);
-    urlPreview.current = file ? URL.createObjectURL(file) : '';
-    setPreview(urlPreview.current);
-    setArchivo(file);
+  const seleccionarArchivos = (files = []) => {
+    urlsPreview.current.forEach(url => URL.revokeObjectURL(url));
+    urlsPreview.current = files.map(file => URL.createObjectURL(file));
+    setPreviews(urlsPreview.current);
+    setArchivos(files);
   };
 
   const actualizarLista = async (signal) => {
@@ -80,7 +83,10 @@ export default function GestionCursos() {
     setFormData(formularioCurso(curso));
     aceptado.current = null;
     setGuardado(null);
-    seleccionarArchivo(null);
+    seleccionarArchivos();
+    setResultadoImagenes(null);
+    setImagenAEliminar(null);
+    setImagenesDesactualizadas(false);
     setDetalles({});
     setError('');
     setMostrarFormulario(true);
@@ -88,16 +94,16 @@ export default function GestionCursos() {
   const cerrar = () => {
     if (ocupado.current) return;
     setMostrarFormulario(false);
-    seleccionarArchivo(null);
+    seleccionarArchivos();
   };
   const handleChange = (e) => setFormData(prev => ({ ...prev,
     [e.target.name]: e.target.type === 'checkbox' ? e.target.checked : e.target.value,
   }));
   const handleFileChange = (e) => {
-    const file = e.target.files[0];
-    if (!file) { seleccionarArchivo(null); return; }
-    try { validarImagenCurso(file); seleccionarArchivo(file); setError(''); }
-    catch (fallo) { e.target.value = ''; seleccionarArchivo(null); setError(fallo.message); }
+    const files = Array.from(e.target.files);
+    if (!files.length) { seleccionarArchivos(); return; }
+    try { validarImagenesCurso(files, formData.imagenes.length); seleccionarArchivos(files); setError(''); }
+    catch (fallo) { e.target.value = ''; seleccionarArchivos(); setError(fallo.message); }
   };
   const mostrarFallo = (fallo) => {
     setError(fallo.message);
@@ -115,20 +121,24 @@ export default function GestionCursos() {
     setError('');
     setDetalles({});
     try {
-      const resultado = await guardarCursoConImagen(academia, {
-        id: formData.id, datos: formData, archivo, guardado: aceptado.current, signal,
+      const resultado = await guardarCursoConImagenes(academia, {
+        id: formData.id, datos: formData, archivos, guardado: aceptado.current, signal, anterior: resultadoImagenes,
         onGuardado: curso => {
           aceptado.current = curso;
           if (!signal.aborted) { setGuardado(curso); setFormData(prev => ({ ...prev, id: curso.id })); }
         },
       });
       if (signal.aborted) return;
+      aceptado.current = resultado.guardado;
+      setGuardado(resultado.guardado);
+      setFormData(prev => ({ ...prev, imagenes: resultado.guardado.imagenes ?? [] }));
+      setResultadoImagenes(resultado);
       const parcial = resultado.errorImagen;
       if (parcial) {
-        setError(`El curso ${resultado.guardado.id} se guardó, pero la imagen no se pudo confirmar. ${parcial.message} Reintentá solo la imagen o cerrá.`);
+        setError(`El curso ${resultado.guardado.id} se guardó. No se confirmó la subida completa. ${parcial.message}`);
       } else {
         setMostrarFormulario(false);
-        seleccionarArchivo(null);
+        seleccionarArchivos();
         toast.success('Curso guardado correctamente.');
       }
       try { await actualizarLista(signal); }
@@ -139,6 +149,54 @@ export default function GestionCursos() {
       if (!signal.aborted) mostrarFallo(fallo);
     } finally {
       if (!signal.aborted) { ocupado.current = false; setPendiente(false); }
+    }
+  };
+
+  const consultarImagenes = async () => {
+    const signal = vida.current?.signal;
+    if (!signal || signal.aborted || ocupado.current) return;
+    ocupado.current = true;
+    setPendiente(true);
+    try {
+      const resultado = await reconciliarImagenesCurso(academia,
+        resultadoImagenes ?? { guardado: { ...formData, id: formData.id } }, { signal });
+      if (signal.aborted) return;
+      if (resultadoImagenes) setResultadoImagenes(resultado);
+      setImagenesDesactualizadas(!resultado.reconciliado);
+      if (resultado.reconciliado) {
+        setFormData(prev => ({ ...prev, imagenes: resultado.guardado.imagenes }));
+        if (aceptado.current) { aceptado.current = resultado.guardado; setGuardado(resultado.guardado); }
+        setError('');
+      } else setError(`No se pudo consultar el estado actual. ${resultado.errorReconciliacion.message}`);
+    } finally {
+      if (!signal.aborted) { ocupado.current = false; setPendiente(false); }
+    }
+  };
+
+  const confirmarEliminarImagen = async () => {
+    const signal = vida.current?.signal;
+    if (!signal || signal.aborted || ocupado.current || !imagenAEliminar) return;
+    ocupado.current = true;
+    setPendiente(true);
+    setError('');
+    try {
+      await academia.eliminarImagenCursoAdmin(formData.id, imagenAEliminar.id, { signal });
+      if (signal.aborted) return;
+      const imagenes = formData.imagenes.filter(img => img.id !== imagenAEliminar.id);
+      setFormData(prev => ({ ...prev, imagenes }));
+      if (aceptado.current) {
+        aceptado.current = { ...aceptado.current, imagenes };
+        setGuardado(aceptado.current);
+        setResultadoImagenes(prev => prev ? { ...prev, guardado: aceptado.current } : prev);
+      }
+      toast.success('Imagen eliminada.');
+    } catch (fallo) {
+      if (!signal.aborted) {
+        setImagenesDesactualizadas(true);
+        setError(`No se confirmó la eliminación. Consultá las imágenes antes de otra acción. ${fallo.message}`);
+      }
+    } finally {
+      if (!signal.aborted) { setImagenAEliminar(null); ocupado.current = false; setPendiente(false); }
     }
   };
 
@@ -188,6 +246,8 @@ export default function GestionCursos() {
     </label>
   );
   const bloqueado = pendiente || cargando || !!error;
+  const subidaIncierta = !!resultadoImagenes?.incierto;
+  const necesitaConsulta = imagenesDesactualizadas || (resultadoImagenes?.errorImagen && !resultadoImagenes.reconciliado);
   const totalPaginas = Math.max(1, Math.ceil(cursos.length / itemsPorPagina));
   const pagina = Math.min(paginaActual, totalPaginas);
   const cursosPaginados = cursos.slice((pagina - 1) * itemsPorPagina, pagina * itemsPorPagina);
@@ -197,8 +257,8 @@ export default function GestionCursos() {
       <h2 style={{ color: 'var(--text-main)', fontSize: '2rem' }}>{formData.id ? 'Editar Curso' : 'Nuevo Curso'}</h2>
       {error && <p role="alert">{error}</p>}
       {pendiente && <p role="status">Guardando cambios...</p>}
-      {guardado && <p role="status">Curso guardado (ID: {guardado.id}). Los campos ya están confirmados; solo se reintentará la imagen.</p>}
-      <form onSubmit={handleSubmit} style={panelStyle}>
+      {guardado && <p role="status">Curso guardado (ID: {guardado.id}). Los campos ya están confirmados; no se volverán a guardar al subir imágenes.</p>}
+      <form className="admin-form-panel" onSubmit={handleSubmit} style={panelStyle}>
         <fieldset disabled={pendiente || !!guardado} style={{ border: 0, padding: 0, display: 'grid', gap: '1.5rem' }}>
           {campo('titulo', 'Título del Curso *', { minLength: 3, maxLength: 180 })}
           {seleccion('categoriaId', 'Categoría *', [
@@ -218,17 +278,43 @@ export default function GestionCursos() {
           <label style={labelStyle}><input type="checkbox" name="activo" checked={formData.activo} onChange={handleChange} /> Curso activo</label>
           <label style={labelStyle}><input type="checkbox" name="destacado" checked={formData.destacado} onChange={handleChange} /> Curso destacado</label>
         </fieldset>
-        <div style={{ display: 'flex', gap: '1rem', flexWrap: 'wrap' }}>
-          {formData.imagenes.map(img => <img key={img.id ?? img.url} src={img.url} alt={img.textoAlternativo ?? formData.titulo} style={imagenStyle} />)}
-        </div>
-        <label style={inputGroupStyle}><span style={labelStyle}>Agregar imagen (JPEG, PNG o WebP; máximo 5 MiB)</span>
-          <input disabled={pendiente} type="file" accept="image/jpeg,image/png,image/webp" onChange={handleFileChange} style={inputStyle} />
+        <section aria-label="Imágenes del curso">
+          <p role="status">{formData.imagenes.length}/10 imágenes confirmadas. Quedan {Math.max(0, 10 - formData.imagenes.length)} lugares. Seleccionadas: {archivos.length}.</p>
+          <p>Hasta 5 por envío, 10 por curso y 5 MiB por archivo JPEG, PNG o WebP. El servidor también verifica el contenido. La primera imagen es la portada; no se puede reordenar.</p>
+          <div className="admin-course-images">
+            {formData.imagenes.map((img, indice) => <div key={img.id ?? img.url}>
+              <img src={img.url} alt={img.textoAlternativo || `${formData.titulo}, imagen ${indice + 1}`} style={imagenStyle} />
+              {indice === 0 && <span>Portada</span>}
+              <button type="button" disabled={pendiente || necesitaConsulta || subidaIncierta} onClick={() => setImagenAEliminar(img)} style={btnEliminarStyle} aria-label={`Eliminar imagen ${indice + 1}`}>Eliminar imagen</button>
+            </div>)}
+          </div>
+          {imagenAEliminar && <div role="group" aria-label="Confirmar eliminación de imagen">
+            <p>¿Eliminar esta imagen de forma permanente? Si es la portada, la siguiente ocupará su lugar.</p>
+            <img src={imagenAEliminar.url} alt="Imagen que se eliminará" style={imagenStyle} />
+            <div className="admin-actions">
+              <button type="button" disabled={pendiente} onClick={() => setImagenAEliminar(null)} style={btnCancelarStyle}>Cancelar eliminación</button>
+              <button type="button" disabled={pendiente} onClick={confirmarEliminarImagen} style={btnEliminarStyle}>Confirmar eliminación</button>
+            </div>
+          </div>}
+        </section>
+        {resultadoImagenes?.errorImagen && <div role="status">
+          <p>{resultadoImagenes.reconciliado ? 'Lista consultada al servidor; se muestran las imágenes observadas.' : 'Todavía no se pudo consultar la lista actual.'}</p>
+          <p>{subidaIncierta ? 'La subida pudo haberse aplicado total o parcialmente. Una consulta no garantiza que haya terminado. No repetiremos este lote: cerrá, verificá las imágenes más tarde y seleccioná solo las faltantes. Volver a subir puede duplicarlas; no hay garantía de idempotencia.' : 'El servidor rechazó el envío. Solo se puede reintentar tras consultar las imágenes actuales.'}</p>
+        </div>}
+        {(resultadoImagenes?.errorImagen || imagenesDesactualizadas) && <button type="button" disabled={pendiente} onClick={consultarImagenes} style={btnCancelarStyle}>Consultar imágenes actuales (sin subir)</button>}
+        <label style={inputGroupStyle}><span style={labelStyle}>Agregar imágenes</span>
+          <input disabled={pendiente || subidaIncierta || necesitaConsulta || !!imagenAEliminar} type="file" multiple accept="image/jpeg,image/png,image/webp" onChange={handleFileChange} style={inputStyle} />
         </label>
-        <p style={labelStyle}>Las imágenes existentes se conservan. La nueva imagen se agrega después de guardar el curso.</p>
-        {archivo && preview && <img src={preview} alt="Vista previa de la imagen seleccionada" style={imagenStyle} />}
-        <div style={{ display: 'flex', gap: '1rem', justifyContent: 'flex-end' }}>
+        <p style={labelStyle}>Las imágenes se agregan después de guardar el curso. Un fallo de subida no vuelve a crear ni a modificar sus campos.</p>
+        <div className="admin-course-images">
+          {archivos.map((file, indice) => <div key={indice}>
+            <img src={previews[indice]} alt={`Vista previa ${indice + 1}: ${file.name}`} style={imagenStyle} />
+            <span>{file.name} ({(file.size / 1024 / 1024).toFixed(2)} MiB)</span>
+          </div>)}
+        </div>
+        <div className="admin-actions">
           <button disabled={pendiente} type="button" onClick={cerrar} style={btnCancelarStyle}>{guardado ? 'Cerrar (curso guardado)' : 'Cancelar'}</button>
-          <button disabled={pendiente || (!!guardado && !archivo)} type="submit" style={btnGuardarStyle}>{guardado ? 'Reintentar solo imagen' : 'Guardar Curso'}</button>
+          <button disabled={pendiente || subidaIncierta || necesitaConsulta || !!imagenAEliminar || (!!guardado && !archivos.length)} type="submit" style={btnGuardarStyle}>{guardado ? 'Reintentar solo imágenes' : 'Guardar Curso'}</button>
         </div>
       </form>
     </div>
@@ -236,7 +322,7 @@ export default function GestionCursos() {
 
   return (
     <div>
-      <header style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '2rem' }}>
+      <header className="admin-page-header">
         <h2 style={{ margin: 0, color: 'var(--text-main)', fontSize: '2rem' }}>Gestión de Cursos</h2>
         <button disabled={bloqueado} onClick={() => abrir()} style={btnGuardarStyle}>+ Nuevo Curso</button>
       </header>
@@ -247,7 +333,7 @@ export default function GestionCursos() {
         <label style={{ ...labelStyle, padding: '1rem' }}>Mostrar: <select value={itemsPorPagina} onChange={e => { setItemsPorPagina(Number(e.target.value)); setPaginaActual(1); }} style={inputStyle}>
           {[2, 10, 15, 20].map(n => <option key={n} value={n}>{n}</option>)}
         </select> cursos</label>
-        <div style={{ overflowX: 'auto' }}>
+        <div className="admin-table-scroll" role="region" aria-label="Lista de cursos" tabIndex={0}>
           <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left' }}>
             <thead><tr>{['Curso', 'Categoría', 'Estado', 'Acciones'].map(t => <th key={t} style={thStyle}>{t}</th>)}</tr></thead>
             <tbody>
@@ -267,9 +353,9 @@ export default function GestionCursos() {
             </tbody>
           </table>
         </div>
-        <div style={{ padding: '1rem', display: 'flex', justifyContent: 'space-between', gap: '1rem' }}>
+        <div className="admin-pagination">
           <span style={labelStyle}>Mostrando página {pagina} de {totalPaginas} (Total: {cursos.length} cursos)</span>
-          <div>
+          <div className="admin-actions">
             <button disabled={pagina === 1} onClick={() => setPaginaActual(pagina - 1)} style={btnCancelarStyle}>Anterior</button>
             <button disabled={pagina === totalPaginas} onClick={() => setPaginaActual(pagina + 1)} style={btnCancelarStyle}>Siguiente</button>
           </div>
@@ -279,7 +365,7 @@ export default function GestionCursos() {
   );
 }
 
-const panelStyle = { backgroundColor: '#0a0a0a', padding: '2rem', borderRadius: '8px', border: '1px solid #333', display: 'flex', flexDirection: 'column', gap: '1.5rem', maxWidth: '800px' };
+const panelStyle = { backgroundColor: '#0a0a0a', borderRadius: '8px', border: '1px solid #333', display: 'flex', flexDirection: 'column', gap: '1.5rem', maxWidth: '800px' };
 const thStyle = { padding: '1rem', color: '#d1d5db', fontWeight: '600', fontSize: '0.9rem', textTransform: 'uppercase' };
 const tdStyle = { padding: '1rem', color: '#9ca3af' };
 const inputGroupStyle = { display: 'flex', flexDirection: 'column', gap: '0.5rem' };

@@ -1,11 +1,13 @@
 import React, { useEffect, useState } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
 import { academia, modalidadesCurso, nivelesCurso, formatearFechaInicio, asuntoConsultaCurso } from '../api/academia';
+import './PublicResponsive.css';
 
 export default function DetalleCurso() {
   const { id } = useParams();
   const navigate = useNavigate();
   const [resultado, setResultado] = useState(null);
+  const [seleccion, setSeleccion] = useState(null);
 
   useEffect(() => {
     const controller = new AbortController();
@@ -22,9 +24,12 @@ export default function DetalleCurso() {
   const cargando = resultado?.id !== id;
   const curso = cargando ? null : resultado.curso;
   const error = cargando ? null : resultado.error;
+  const imagenes = curso?.imagenes ?? [];
+  const indiceImagen = seleccion?.cursoId === id && imagenes[seleccion.indice] ? seleccion.indice : 0;
+  const imagenActual = imagenes[indiceImagen];
   if (cargando || error || !curso) {
     return (
-      <div style={{ textAlign: 'center', padding: '5rem', color: 'var(--text-main)' }}>
+      <div className="public-detail-status" style={{ textAlign: 'center', color: 'var(--text-main)' }}>
         {cargando ? <p role="status">Cargando curso...</p> : error?.status === 404 ? (
           <h2>Curso no encontrado</h2>
         ) : (
@@ -41,7 +46,7 @@ export default function DetalleCurso() {
   }
 
   return (
-    <div style={{ maxWidth: '1000px', margin: '0 auto', padding: '2rem' }}>
+    <div className="public-detail" style={{ maxWidth: '1000px', margin: '0 auto' }}>
       <button 
         onClick={() => navigate('/cursos')} 
         style={{ 
@@ -61,13 +66,24 @@ export default function DetalleCurso() {
 
       <div style={{ display: 'flex', flexDirection: 'column', gap: '2rem', backgroundColor: 'var(--bg-card)', borderRadius: '12px', overflow: 'hidden', border: '1px solid #333' }}>
         
-        {curso.imagenes?.[0]?.url && (
-          <div style={{ height: '400px', width: '100%' }}>
-            <img src={curso.imagenes[0].url} alt={curso.imagenes[0].textoAlternativo || curso.titulo} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
-          </div>
+        {imagenActual?.url && (
+          <section aria-label={`Galería de ${curso.titulo}`}>
+            <div className="public-detail-image" style={{ width: '100%' }}>
+              <img id="imagen-curso-ampliada" src={imagenActual.url} alt={imagenActual.textoAlternativo || `${curso.titulo}, imagen ${indiceImagen + 1}`} style={{ width: '100%', height: '100%', objectFit: 'contain' }} />
+            </div>
+            <p className="public-gallery-status" role="status">Imagen {indiceImagen + 1} de {imagenes.length}{indiceImagen === 0 ? ' · Portada' : ''}</p>
+            {imagenes.length > 1 && <div className="public-gallery-thumbnails" role="group" aria-label="Elegir imagen">
+              {imagenes.map((img, indice) => <button key={img.id ?? img.url} type="button"
+                aria-label={`Ver imagen ${indice + 1} de ${imagenes.length}${indice === 0 ? ', portada' : ''}`}
+                aria-pressed={indice === indiceImagen} aria-controls="imagen-curso-ampliada"
+                onClick={() => setSeleccion({ cursoId: id, indice })}>
+                <img src={img.url} alt="" loading="lazy" />
+              </button>)}
+            </div>}
+          </section>
         )}
 
-        <div style={{ padding: '3rem', display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
+        <div className="public-detail-content" style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
           
           <div style={{ display: 'flex', gap: '1rem', flexWrap: 'wrap' }}>
             <span style={badgeStyle}>{curso.categoria.nombre}</span>
@@ -77,7 +93,7 @@ export default function DetalleCurso() {
             </span>
           </div>
 
-          <h1 style={{ fontFamily: 'Georgia, serif', fontSize: '3.5rem', color: 'var(--text-main)', margin: '0', lineHeight: '1.1' }}>
+          <h1 className="public-detail-title" style={{ fontFamily: 'Georgia, serif', color: 'var(--text-main)', margin: '0', lineHeight: '1.1' }}>
             {curso.titulo}
           </h1>
 
@@ -86,7 +102,7 @@ export default function DetalleCurso() {
           </p>
 
           {/* Información publicada por la academia */}
-          <div style={{ display: 'flex', gap: '4rem', marginTop: '2rem', padding: '2rem 0', borderTop: '1px solid #333', borderBottom: '1px solid #333', flexWrap: 'wrap' }}>
+          <div className="public-detail-facts" style={{ display: 'flex', marginTop: '2rem', padding: '2rem 0', borderTop: '1px solid #333', borderBottom: '1px solid #333', flexWrap: 'wrap' }}>
             <div>
               <h4 style={{ color: '#9ca3af', margin: '0 0 0.5rem 0', fontSize: '0.9rem', textTransform: 'uppercase' }}>Modalidad</h4>
               <p style={{ color: 'var(--text-main)', margin: 0, fontWeight: 'bold', fontSize: '1.1rem' }}>{modalidadesCurso[curso.modalidad]}</p>
@@ -107,7 +123,8 @@ export default function DetalleCurso() {
 
           <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: '1rem' }}>
             {/* T2 utiliza el UUID y el asunto para contextualizar la consulta. */}
-            <Link 
+            <Link
+              className="public-detail-inquiry"
               to="/contacto"
               state={{ cursoId: curso.id, asunto: asuntoConsultaCurso(curso.titulo) }}
               style={{

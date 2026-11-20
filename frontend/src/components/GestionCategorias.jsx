@@ -121,7 +121,7 @@ export default function GestionCategorias() {
         </header>
         {error && <p role="alert">{error}</p>}
         {pendiente && <p role="status">Guardando cambios...</p>}
-        <form onSubmit={handleSubmit} style={{ backgroundColor: '#0a0a0a', padding: '2rem', borderRadius: '8px', border: '1px solid #333', display: 'flex', flexDirection: 'column', gap: '1.5rem', maxWidth: '600px' }}>
+        <form className="admin-form-panel" onSubmit={handleSubmit} style={{ backgroundColor: '#0a0a0a', borderRadius: '8px', border: '1px solid #333', display: 'flex', flexDirection: 'column', gap: '1.5rem', maxWidth: '600px' }}>
           
           <div style={inputGroupStyle}>
             <label style={labelStyle}>Nombre de la Categoría *</label>
@@ -134,7 +134,7 @@ export default function GestionCategorias() {
           </div>
           
           <label style={labelStyle}><input type="checkbox" name="activa" checked={formData.activa} disabled={pendiente} onChange={handleChange} /> Categoría activa</label>
-          <div style={{ display: 'flex', gap: '1rem', justifyContent: 'flex-end', marginTop: '1rem' }}>
+          <div className="admin-actions" style={{ marginTop: '1rem' }}>
             <button disabled={pendiente} type="button" onClick={() => setMostrarFormulario(false)} style={btnCancelarStyle}>Cancelar</button>
             <button disabled={pendiente} type="submit" style={btnGuardarStyle}>Guardar Categoría</button>
           </div>
@@ -146,7 +146,7 @@ export default function GestionCategorias() {
   // --- RENDERIZADO DE LA TABLA ---
   return (
     <div>
-      <header style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '2rem' }}>
+      <header className="admin-page-header">
         <h2 style={{ margin: 0, color: 'var(--text-main)', fontSize: '2rem' }}>Gestión de Categorías</h2>
         <button disabled={pendiente || cargando || !!error} style={btnGuardarStyle} onClick={handleNuevo}>
           + Nueva Categoría
@@ -156,7 +156,7 @@ export default function GestionCategorias() {
       {error && <p role="alert">{error} <button disabled={pendiente} onClick={recargar}>Actualizar lista</button></p>}
       {pendiente && <p role="status">Guardando cambios...</p>}
       {cargando && <p role="status">Cargando categorías...</p>}
-      <div style={{ backgroundColor: '#0a0a0a', borderRadius: '8px', border: '1px solid #333', overflowX: 'auto' }}>
+      <div className="admin-table-scroll" role="region" aria-label="Lista de categorías" tabIndex={0} style={{ backgroundColor: '#0a0a0a', borderRadius: '8px', border: '1px solid #333' }}>
         <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left' }}>
           <thead>
             <tr style={{ borderBottom: '1px solid #333', backgroundColor: 'rgba(255, 255, 255, 0.02)' }}>

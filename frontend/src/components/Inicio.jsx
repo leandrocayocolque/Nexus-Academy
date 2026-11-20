@@ -1,20 +1,20 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
+import { academia, formatearFechaInicio } from '../api/academia';
 import { Link } from 'react-router-dom';
+import './PublicResponsive.css';
 
 export default function Inicio() {
   return (
-    <div style={{ padding: '0', fontFamily: 'sans-serif', overflowX: 'hidden' }}>
+    <div className="public-home" style={{ padding: '0', fontFamily: 'sans-serif' }}>
       
       {/* SECCIÓN 1: HERO (Basado en la cabecera centrada con botones duales) */}
-      <section style={{
+      <section className="public-home-hero" style={{
         textAlign: 'center',
-        padding: '8rem 2rem 6rem',
         // Un degradado sutil verde de fondo para simular el efecto de la primera imagen
         background: 'radial-gradient(circle at top, rgba(16, 185, 129, 0.15), var(--bg-dark) 50%)'
       }}>
-        <h1 style={{
+        <h1 className="public-home-title" style={{
           fontFamily: 'Georgia, serif',
-          fontSize: '4.5rem',
           color: 'var(--text-main)',
           margin: '0 0 1.5rem',
           letterSpacing: '-1px'
@@ -25,7 +25,7 @@ export default function Inicio() {
           El rol del profesional ha cambiado a ser un orquestador de tecnología. 
           La teoría tradicional ya no es suficiente para destacar en el mercado actual.
         </p>
-        <div style={{ display: 'flex', gap: '1rem', justifyContent: 'center' }}>
+        <div className="public-home-actions" style={{ display: 'flex', gap: '1rem', justifyContent: 'center' }}>
           <Link to="/cursos" style={{ ...botonStyle, backgroundColor: 'var(--text-main)', color: 'var(--bg-dark)' }}>
             Empezar ahora &rarr;
           </Link>
@@ -34,6 +34,9 @@ export default function Inicio() {
           </Link>
         </div>
       </section>
+
+      <SeccionPublica tipo="promociones" />
+      <SeccionPublica tipo="destacados" />
 
       {/* SECCIÓN 2: FRANJA DE DATOS (Reemplazando los logos de empresas) */}
       <section style={{ 
@@ -55,9 +58,9 @@ export default function Inicio() {
       </section>
 
       {/* SECCIÓN 3: TEXTO TACHADO (Basado en el diseño dividido) */}
-      <section style={{ display: 'flex', flexWrap: 'wrap', padding: '8rem 4rem', gap: '4rem', maxWidth: '1200px', margin: '0 auto' }}>
+      <section className="public-home-intro" style={{ display: 'flex', flexWrap: 'wrap', maxWidth: '1200px', margin: '0 auto' }}>
         <div style={{ flex: '1 1 400px' }}>
-          <h2 style={{ fontFamily: 'Georgia, serif', fontSize: '3.5rem', margin: 0, lineHeight: '1.1' }}>
+          <h2 className="public-home-intro-title" style={{ fontFamily: 'Georgia, serif', margin: 0, lineHeight: '1.1' }}>
             La educación <span style={{ textDecoration: 'line-through', opacity: 0.4 }}>teórica</span><br/> ha evolucionado
           </h2>
         </div>
@@ -72,12 +75,12 @@ export default function Inicio() {
       </section>
 
       {/* SECCIÓN 4: CARACTERÍSTICAS Y VISUALES (Texto a la izq, recuadros dinámicos a la der) */}
-      <section style={{ padding: '4rem 4rem 10rem', maxWidth: '1200px', margin: '0 auto' }}>
-        <h2 style={{ fontFamily: 'Georgia, serif', fontSize: '3rem', margin: '0 0 5rem', textAlign: 'center' }}>
+      <section className="public-home-features" style={{ maxWidth: '1200px', margin: '0 auto' }}>
+        <h2 className="public-home-features-title" style={{ fontFamily: 'Georgia, serif', textAlign: 'center' }}>
           Reflejá tu aprendizaje con trabajo real
         </h2>
 
-        <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6rem', alignItems: 'center' }}>
+        <div className="public-home-feature-columns" style={{ display: 'flex', flexWrap: 'wrap', alignItems: 'center' }}>
           
           <div style={{ flex: '1 1 350px' }}>
             <h3 style={{ fontSize: '2rem', color: 'var(--text-main)', margin: '0 0 1rem' }}>
@@ -92,12 +95,12 @@ export default function Inicio() {
           </div>
 
           {/* Grilla de imágenes con el efecto hover que armamos antes */}
-          <div style={{ flex: '1.5 1 400px', display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '1.5rem' }}>
-            <div className="img-hover-effect" style={{ height: '300px' }}>
+          <div className="public-home-images" style={{ flex: '1.5 1 400px', display: 'grid' }}>
+            <div className="img-hover-effect public-home-image">
               <img src="https://images.unsplash.com/photo-1522071820081-009f0129c71c?w=600&q=80" alt="Alumnos trabajando en equipo" />
             </div>
             {/* Le agrego un "translateY" para que la segunda imagen baje un poco y rompa la simetría, dando un look más moderno */}
-            <div className="img-hover-effect" style={{ height: '300px', transform: 'translateY(3rem)' }}>
+            <div className="img-hover-effect public-home-image public-home-image-offset">
               <img src="https://images.unsplash.com/photo-1517245386807-bb43f82c33c4?w=600&q=80" alt="Desarrollo y tecnología" />
             </div>
           </div>
@@ -105,6 +108,56 @@ export default function Inicio() {
         </div>
       </section>
     </div>
+  );
+}
+
+// Cada sección mantiene su petición y su estado: un fallo no oculta la otra.
+function SeccionPublica({ tipo }) {
+  const promociones = tipo === 'promociones';
+  const [datos, setDatos] = useState([]);
+  const [cargando, setCargando] = useState(true);
+  const [error, setError] = useState('');
+  const [intento, setIntento] = useState(0);
+  const titulo = promociones ? 'Promociones vigentes' : 'Cursos destacados';
+
+  useEffect(() => {
+    const controller = new AbortController();
+    const cargar = tipo === 'promociones' ? academia.cargarPromocionesActivas : academia.cargarCursosDestacados;
+    cargar({ signal: controller.signal }).then(resultado => {
+      if (!controller.signal.aborted) setDatos(resultado);
+    }).catch(fallo => {
+      if (!controller.signal.aborted) setError(fallo.message);
+    }).finally(() => {
+      if (!controller.signal.aborted) setCargando(false);
+    });
+    return () => controller.abort();
+  }, [tipo, intento]);
+
+  return (
+    <section className="public-home-publications" aria-labelledby={`inicio-${tipo}`} aria-busy={cargando}>
+      <h2 id={`inicio-${tipo}`}>{titulo}</h2>
+      {cargando ? <p role="status">Cargando {titulo.toLowerCase()}...</p>
+        : error ? <div role="alert"><p>No se pudieron cargar {titulo.toLowerCase()}. {error}</p>
+          <button onClick={() => { setError(''); setCargando(true); setIntento(i => i + 1); }}>Reintentar</button></div>
+          : datos.length === 0 ? <p>{promociones ? 'No hay promociones vigentes en este momento.' : 'No hay cursos destacados en este momento.'}</p>
+            : <div className="public-home-publication-grid">
+              {datos.map(item => <article key={item.id} className="public-home-publication-card">
+                <h3>{item.titulo}</h3>
+                {promociones ? <>
+                  <p className="public-home-discount">{item.porcentajeDescuento}% de descuento</p>
+                  {item.descripcion && <p className="public-home-publication-text">{item.descripcion}</p>}
+                  {item.fechaInicio && <p>Desde: {new Date(item.fechaInicio).toLocaleString('es-AR')} (hora local)</p>}
+                  {item.fechaFin && <p>Hasta: {new Date(item.fechaFin).toLocaleString('es-AR')} (hora local)</p>}
+                  {item.curso?.id ? <Link to={`/cursos/${encodeURIComponent(item.curso.id)}`}>Ver curso: {item.curso.titulo}</Link>
+                    : <Link to="/cursos">Explorar cursos</Link>}
+                </> : <>
+                  {item.descripcion && <p className="public-home-publication-text">{item.descripcion}</p>}
+                  <p>Inicio: {formatearFechaInicio(item.fechaInicio)}</p>
+                  <Link to={`/cursos/${encodeURIComponent(item.id)}`}>Ver curso: {item.titulo}</Link>
+                </>}
+              </article>)}
+            </div>}
+    </section>
   );
 }
 
