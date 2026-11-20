@@ -10,6 +10,12 @@ export function crearControladorUsuarios(servicio) {
       respuesta
         .status(200)
         .json(await servicio.actualizarPerfil(solicitud.usuarioAutenticado.id, solicitud.body));
+    },
+
+    async cambiarContrasena(solicitud, respuesta) {
+      respuesta
+        .status(200)
+        .json(await servicio.cambiarContrasena(solicitud.usuarioAutenticado.id, solicitud.body));
     }
   });
 }

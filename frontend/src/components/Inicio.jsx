@@ -1,5 +1,6 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
+import { useNegocio } from './NegocioContext';
 
 export default function Inicio() {
   return (

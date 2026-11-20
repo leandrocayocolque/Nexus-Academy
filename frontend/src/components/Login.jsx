@@ -1,5 +1,5 @@
 import { useRef, useState } from 'react';
-import { Navigate, useLocation } from 'react-router-dom';
+import { Link, Navigate, useLocation } from 'react-router-dom';
 import { useSesion } from '../auth/SesionContext.js';
 import { destinoAdmin } from '../auth/sesion.js';
 
@@ -50,7 +50,13 @@ export default function Login() {
         </button>
         {pendiente && <button type="button" onClick={logout}>Cancelar acceso</button>}
       </form>
+      <div style={{ marginTop: '1rem', textAlign: 'right' }}>
+        <Link to="/recuperar-contrasena" style={{ color: 'var(--primary-green)', fontSize: '0.9rem', textDecoration: 'none' }}>
+          ¿Olvidaste tu contraseña?
+        </Link>
+      </div>
       <p>Por seguridad, al recargar la página deberás iniciar sesión nuevamente.</p>
     </section>
+    
   );
 }

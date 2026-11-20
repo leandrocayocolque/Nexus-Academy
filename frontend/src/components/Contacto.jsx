@@ -2,9 +2,11 @@ import React, { useState, useRef } from 'react';
 import { useLocation } from 'react-router-dom';
 import { toast } from 'sonner';
 import { academia, validarConsulta, contextoConsulta } from '../api/academia';
+import { useNegocio } from './NegocioContext';
 
 export default function Contacto() {
   const location = useLocation();
+  const { negocio } = useNegocio();
 
   const [formData, setFormData] = useState({
     nombre: '',
@@ -78,8 +80,14 @@ export default function Contacto() {
     outline: 'none'
   });
 
+  const horarios = negocio?.horariosAtencion ? Object.entries(negocio.horariosAtencion) : [];
+  const redes = negocio?.enlacesSociales ? Object.entries(negocio.enlacesSociales) : [];
+  const hayInfoNegocio = Boolean(
+    negocio?.direccion || negocio?.telefono || negocio?.correo || horarios.length > 0 || redes.length > 0
+  );
+
   return (
-    <div style={{ padding: '3rem 2rem', maxWidth: '600px', margin: '0 auto' }}>
+    <div style={{ padding: '3rem 2rem', maxWidth: '1050px', margin: '0 auto' }}>
       <header style={{ textAlign: 'center', marginBottom: '2.5rem' }}>
         <h2 style={{ color: 'var(--primary-green)', fontSize: '2.5rem', margin: '0 0 0.5rem 0' }}>
           Contactanos
@@ -89,123 +97,211 @@ export default function Contacto() {
         </p>
       </header>
 
-      {/* noValidate apaga los tooltips por defecto del navegador para usar los nuestros */}
-      <form 
-        onSubmit={handleSubmit}
-        aria-busy={pendiente}
-        noValidate
-        style={{ 
-          display: 'flex', 
-          flexDirection: 'column', 
-          gap: '1.5rem', 
-          backgroundColor: 'var(--bg-card)', 
-          padding: '2.5rem', 
-          borderRadius: '8px', 
-          border: '1px solid #333',
-          boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.5)'
-        }}
-      >
-        
-        {/* Campo Nombre */}
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
-          <label htmlFor="nombre" style={{ color: '#d1d5db', fontSize: '0.95rem' }}>Nombre completo *</label>
-          <input 
-            type="text" 
-            id="nombre" 
-            name="nombre"
-            disabled={pendiente}
-            value={formData.nombre} 
-            onChange={handleChange} 
-            style={getStyleInput('nombre')}
-          />
-          {errores.nombre && <span style={{ color: '#ef4444', fontSize: '0.85rem' }}>{errores.nombre}</span>}
-        </div>
+      <div style={{ display: 'flex', flexWrap: 'wrap', gap: '2rem', alignItems: 'flex-start', justifyContent: 'center' }}>
+        {/* Tarjeta de Información del Comercio */}
+        {hayInfoNegocio && (
+          <aside
+            style={{
+              flex: '1 1 320px',
+              maxWidth: '400px',
+              backgroundColor: 'var(--bg-card)',
+              padding: '2rem',
+              borderRadius: '8px',
+              border: '1px solid #333',
+              display: 'flex',
+              flexDirection: 'column',
+              gap: '1.5rem'
+            }}
+          >
+            <h3 style={{ margin: 0, color: 'var(--primary-green)', fontSize: '1.35rem' }}>
+              {negocio?.nombre || 'Información de Contacto'}
+            </h3>
 
-        {/* Campo Correo */}
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
-          <label htmlFor="correo" style={{ color: '#d1d5db', fontSize: '0.95rem' }}>Correo electrónico *</label>
-          <input 
-            type="email" 
-            id="correo" 
-            name="correo"
-            disabled={pendiente}
-            value={formData.correo} 
-            onChange={handleChange} 
-            style={getStyleInput('correo')}
-          />
-          {errores.correo && <span style={{ color: '#ef4444', fontSize: '0.85rem' }}>{errores.correo}</span>}
-        </div>
+            {negocio?.direccion && (
+              <div>
+                <strong style={{ color: '#d1d5db', display: 'block', marginBottom: '0.25rem' }}>📍 Dirección</strong>
+                <span style={{ color: '#9ca3af' }}>{negocio.direccion}</span>
+              </div>
+            )}
 
-        {/* Campo Teléfono (Sin validación obligatoria) */}
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
-          <label htmlFor="telefono" style={{ color: '#d1d5db', fontSize: '0.95rem' }}>Teléfono (opcional)</label>
-          <input 
-            type="tel" 
-            id="telefono" 
-            name="telefono"
-            disabled={pendiente}
-            value={formData.telefono} 
-            onChange={handleChange} 
-            style={getStyleInput('telefono')}
-          />
-        </div>
+            {negocio?.telefono && (
+              <div>
+                <strong style={{ color: '#d1d5db', display: 'block', marginBottom: '0.25rem' }}>📞 Teléfono</strong>
+                <span style={{ color: '#9ca3af' }}>{negocio.telefono}</span>
+              </div>
+            )}
 
-        {errores.telefono && <span role="alert" style={{ color: '#ef4444' }}>{errores.telefono}</span>}
-        {errores.cursoId && <p role="alert" style={{ color: '#ef4444' }}>{errores.cursoId}</p>}
+            {negocio?.correo && (
+              <div>
+                <strong style={{ color: '#d1d5db', display: 'block', marginBottom: '0.25rem' }}>✉️ Correo</strong>
+                <a href={`mailto:${negocio.correo}`} style={{ color: 'var(--primary-green)', textDecoration: 'none' }}>
+                  {negocio.correo}
+                </a>
+              </div>
+            )}
 
-        {/* Campo Asunto */}
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
-          <label htmlFor="asunto" style={{ color: '#d1d5db', fontSize: '0.95rem' }}>Asunto *</label>
-          <input 
-            type="text" 
-            id="asunto" 
-            name="asunto"
-            disabled={pendiente}
-            value={asunto}
-            onChange={handleChange} 
-            style={getStyleInput('asunto')}
-          />
-          {errores.asunto && <span style={{ color: '#ef4444', fontSize: '0.85rem' }}>{errores.asunto}</span>}
-        </div>
+            {horarios.length > 0 && (
+              <div>
+                <strong style={{ color: '#d1d5db', display: 'block', marginBottom: '0.5rem' }}>🕒 Horarios de atención</strong>
+                <ul style={{ listStyle: 'none', padding: 0, margin: 0, display: 'grid', gap: '0.35rem', color: '#9ca3af', fontSize: '0.95rem' }}>
+                  {horarios.map(([dias, franja]) => (
+                    <li key={dias}>
+                      <span style={{ color: '#d1d5db' }}>{dias}:</span> {franja}
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            )}
 
-        {/* Campo Mensaje */}
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
-          <label htmlFor="mensaje" style={{ color: '#d1d5db', fontSize: '0.95rem' }}>Mensaje *</label>
-          <textarea 
-            id="mensaje" 
-            name="mensaje"
-            disabled={pendiente}
-            rows="5" 
-            value={formData.mensaje} 
-            onChange={handleChange} 
-            style={{ ...getStyleInput('mensaje'), resize: 'vertical' }}
-          ></textarea>
-          {errores.mensaje && <span style={{ color: '#ef4444', fontSize: '0.85rem' }}>{errores.mensaje}</span>}
-        </div>
+            {redes.length > 0 && (
+              <div>
+                <strong style={{ color: '#d1d5db', display: 'block', marginBottom: '0.6rem' }}>🌐 Redes sociales</strong>
+                <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.6rem' }}>
+                  {redes.map(([nombreRed, url]) => (
+                    <a
+                      key={nombreRed}
+                      href={url}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      style={{
+                        padding: '0.4rem 0.9rem',
+                        borderRadius: '999px',
+                        border: '1px solid var(--primary-green)',
+                        backgroundColor: 'rgba(16, 185, 129, 0.1)',
+                        color: 'var(--primary-green)',
+                        textDecoration: 'none',
+                        fontSize: '0.85rem',
+                        fontWeight: '600'
+                      }}
+                    >
+                      {nombreRed} ↗
+                    </a>
+                  ))}
+                </div>
+              </div>
+            )}
+          </aside>
+        )}
 
-        {errorEnvio && <p role="alert" style={{ color: '#ef4444' }}>{errorEnvio}</p>}
-        {pendiente && <p role="status">Enviando consulta...</p>}
-        <button
-          type="submit"
-          disabled={pendiente}
+        {/* Formulario de Consulta */}
+        <form 
+          onSubmit={handleSubmit}
+          aria-busy={pendiente}
+          noValidate
           style={{ 
-            padding: '1rem', 
-            backgroundColor: 'var(--primary-green)', 
-            color: '#fff', 
-            border: 'none', 
-            borderRadius: '4px', 
-            fontSize: '1.05rem', 
-            fontWeight: '600', 
-            cursor: 'pointer', 
-            marginTop: '1rem',
-            transition: 'background-color 0.2s'
+            flex: '2 1 420px',
+            maxWidth: '600px',
+            display: 'flex', 
+            flexDirection: 'column', 
+            gap: '1.5rem', 
+            backgroundColor: 'var(--bg-card)', 
+            padding: '2.5rem', 
+            borderRadius: '8px', 
+            border: '1px solid #333',
+            boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.5)'
           }}
-          onMouseOver={(e) => e.target.style.backgroundColor = 'var(--hover-green)'}
-          onMouseOut={(e) => e.target.style.backgroundColor = 'var(--primary-green)'}
         >
-          {pendiente ? 'Enviando...' : 'Enviar Mensaje'}
-        </button>
-      </form>
+          {/* Campo Nombre */}
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+            <label htmlFor="nombre" style={{ color: '#d1d5db', fontSize: '0.95rem' }}>Nombre completo *</label>
+            <input 
+              type="text" 
+              id="nombre" 
+              name="nombre"
+              disabled={pendiente}
+              value={formData.nombre} 
+              onChange={handleChange} 
+              style={getStyleInput('nombre')}
+            />
+            {errores.nombre && <span style={{ color: '#ef4444', fontSize: '0.85rem' }}>{errores.nombre}</span>}
+          </div>
+
+          {/* Campo Correo */}
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+            <label htmlFor="correo" style={{ color: '#d1d5db', fontSize: '0.95rem' }}>Correo electrónico *</label>
+            <input 
+              type="email" 
+              id="correo" 
+              name="correo"
+              disabled={pendiente}
+              value={formData.correo} 
+              onChange={handleChange} 
+              style={getStyleInput('correo')}
+            />
+            {errores.correo && <span style={{ color: '#ef4444', fontSize: '0.85rem' }}>{errores.correo}</span>}
+          </div>
+
+          {/* Campo Teléfono (Sin validación obligatoria) */}
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+            <label htmlFor="telefono" style={{ color: '#d1d5db', fontSize: '0.95rem' }}>Teléfono (opcional)</label>
+            <input 
+              type="tel" 
+              id="telefono" 
+              name="telefono"
+              disabled={pendiente}
+              value={formData.telefono} 
+              onChange={handleChange} 
+              style={getStyleInput('telefono')}
+            />
+          </div>
+
+          {errores.telefono && <span role="alert" style={{ color: '#ef4444' }}>{errores.telefono}</span>}
+          {errores.cursoId && <p role="alert" style={{ color: '#ef4444' }}>{errores.cursoId}</p>}
+
+          {/* Campo Asunto */}
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+            <label htmlFor="asunto" style={{ color: '#d1d5db', fontSize: '0.95rem' }}>Asunto *</label>
+            <input 
+              type="text" 
+              id="asunto" 
+              name="asunto"
+              disabled={pendiente}
+              value={asunto}
+              onChange={handleChange} 
+              style={getStyleInput('asunto')}
+            />
+            {errores.asunto && <span style={{ color: '#ef4444', fontSize: '0.85rem' }}>{errores.asunto}</span>}
+          </div>
+
+          {/* Campo Mensaje */}
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+            <label htmlFor="mensaje" style={{ color: '#d1d5db', fontSize: '0.95rem' }}>Mensaje *</label>
+            <textarea 
+              id="mensaje" 
+              name="mensaje"
+              disabled={pendiente}
+              rows="5" 
+              value={formData.mensaje} 
+              onChange={handleChange} 
+              style={{ ...getStyleInput('mensaje'), resize: 'vertical' }}
+            ></textarea>
+            {errores.mensaje && <span style={{ color: '#ef4444', fontSize: '0.85rem' }}>{errores.mensaje}</span>}
+          </div>
+
+          {errorEnvio && <p role="alert" style={{ color: '#ef4444' }}>{errorEnvio}</p>}
+          {pendiente && <p role="status">Enviando consulta...</p>}
+          <button
+            type="submit"
+            disabled={pendiente}
+            style={{ 
+              padding: '1rem', 
+              backgroundColor: 'var(--primary-green)', 
+              color: '#fff', 
+              border: 'none', 
+              borderRadius: '4px', 
+              fontSize: '1.05rem', 
+              fontWeight: '600', 
+              cursor: 'pointer', 
+              marginTop: '1rem',
+              transition: 'background-color 0.2s'
+            }}
+            onMouseOver={(e) => e.target.style.backgroundColor = 'var(--hover-green)'}
+            onMouseOut={(e) => e.target.style.backgroundColor = 'var(--primary-green)'}
+          >
+            {pendiente ? 'Enviando...' : 'Enviar Mensaje'}
+          </button>
+        </form>
+      </div>
     </div>
   );
 }

@@ -104,6 +104,91 @@ function camposCategoria(datos) {
     .map(campo => [campo, datos[campo]]));
 }
 
+function prepararNegocio(datos) {
+  const detalles = {};
+
+  const nombre = typeof datos.nombre === 'string' ? datos.nombre.trim() : '';
+  if (nombre.length < 1 || nombre.length > 150) {
+    detalles.nombre = 'El nombre debe tener entre 1 y 150 caracteres.';
+  }
+
+  const textoOpcional = (campo, max, etiqueta) => {
+    if (datos[campo] == null) return null;
+    const valor = String(datos[campo]).trim();
+    if (!valor) return null;
+    if (valor.length > max) {
+      detalles[campo] = `${etiqueta} no puede superar ${max} caracteres.`;
+    }
+    return valor;
+  };
+
+  const descripcion = textoOpcional('descripcion', 2000, 'La descripción');
+  const direccion = textoOpcional('direccion', 300, 'La dirección');
+  const telefono = textoOpcional('telefono', 50, 'El teléfono');
+
+  let correo = null;
+  if (datos.correo != null && String(datos.correo).trim() !== '') {
+    correo = String(datos.correo).trim().toLowerCase();
+    if (correo.length > 254 || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(correo)) {
+      detalles.correo = 'Ingresá un correo electrónico válido.';
+    }
+  }
+
+  let enlacesSociales = null;
+  if (datos.enlacesSociales && typeof datos.enlacesSociales === 'object') {
+    const entradas = Object.entries(datos.enlacesSociales);
+    if (entradas.length > 20) {
+      detalles.enlacesSociales = 'No se permiten más de 20 enlaces sociales.';
+    } else if (entradas.length > 0) {
+      enlacesSociales = {};
+      for (const [red, url] of entradas) {
+        try {
+          new URL(url);
+          enlacesSociales[red.trim()] = url.trim();
+        } catch {
+          detalles.enlacesSociales = `La URL de "${red}" no es válida (debe incluir http:// o https://).`;
+          break;
+        }
+      }
+    }
+  }
+
+  let horariosAtencion = null;
+  if (datos.horariosAtencion && typeof datos.horariosAtencion === 'object') {
+    const entradas = Object.entries(datos.horariosAtencion);
+    if (entradas.length > 20) {
+      detalles.horariosAtencion = 'No se permiten más de 20 horarios.';
+    } else if (entradas.length > 0) {
+      horariosAtencion = {};
+      for (const [dia, franja] of entradas) {
+        const val = String(franja).trim();
+        if (val.length < 1 || val.length > 100) {
+          detalles.horariosAtencion = `El horario de "${dia}" debe tener entre 1 y 100 caracteres.`;
+          break;
+        }
+        horariosAtencion[dia.trim()] = val;
+      }
+    }
+  }
+
+  if (Object.keys(detalles).length) {
+    throw new ErrorApi('Revisá los datos del comercio.', {
+      code: 'VALIDACION_NEGOCIO',
+      detalles,
+    });
+  }
+
+  return {
+    nombre,
+    descripcion,
+    direccion,
+    telefono,
+    correo,
+    enlacesSociales,
+    horariosAtencion,
+  };
+}
+
 export function crearApiAcademia(solicitar = cliente) {
   const listarCursosAdmin = (query = {}, { signal } = {}) =>
     solicitar('/admin/cursos', { signal, query });
@@ -178,6 +263,14 @@ export function crearApiAcademia(solicitar = cliente) {
     },
     eliminarConsultaAdmin: (id, { signal } = {}) =>
       solicitar(`/admin/consultas/${encodeURIComponent(id)}`, { method: 'DELETE', signal }),
+    obtenerNegocio: ({ signal } = {}) =>
+      solicitar('/academia', { signal }),
+    actualizarNegocioAdmin: (datos, { signal } = {}) =>
+      solicitar('/admin/academia', {
+        method: 'PUT',
+        body: prepararNegocio(datos),
+        signal,
+      }),
     listarCursos,
     listarCategorias,
     crearConsulta: async (datos) =>

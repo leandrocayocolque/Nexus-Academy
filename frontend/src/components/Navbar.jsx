@@ -1,11 +1,13 @@
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { useSesion } from '../auth/SesionContext.js';
+import { useNegocio } from './NegocioContext.jsx';
 
 export default function Navbar() {
   const navigate = useNavigate();
   const location = useLocation(); // Nos permite saber en qué ruta estamos para iluminar el menú
   
   const { estado, logout } = useSesion();
+  const { negocio } = useNegocio();
   const isAdmin = estado === 'autenticada';
 
   const handleLogout = () => {
@@ -44,7 +46,11 @@ export default function Navbar() {
             fontWeight: '800', 
             letterSpacing: '-0.5px' 
           }}>
-            NEXUS<span style={{ color: 'var(--primary-green)' }}>Academy</span>
+            {negocio?.nombre ? (
+              negocio.nombre
+            ) : (
+              <>NEXUS<span style={{ color: 'var(--primary-green)' }}>Academy</span></>
+            )}
           </h2>
         </Link>
       </div>
@@ -57,6 +63,8 @@ export default function Navbar() {
             <li><Link to="/admin/cursos" style={getLinkStyle('/admin/cursos')}>Cursos</Link></li>
             <li><Link to="/admin/categorias" style={getLinkStyle('/admin/categorias')}>Categorías</Link></li>
             <li><Link to="/admin/consultas" style={getLinkStyle('/admin/consultas')}>Consultas</Link></li>
+            <li><Link to="/admin/negocio" style={getLinkStyle('/admin/negocio')}>Comercio</Link></li>
+            <li><Link to="/admin/perfil" style={getLinkStyle('/admin/perfil')}>Mi Perfil</Link></li>
             <li>
               <button onClick={handleLogout} style={btnSecondaryStyle}>
                 Cerrar Sesión

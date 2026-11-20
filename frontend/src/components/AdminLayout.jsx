@@ -46,6 +46,12 @@ export default function AdminLayout() {
           <Link to="/admin/consultas" style={getLinkStyle('/admin/consultas')}>
             ✉️ Consultas
           </Link>
+          <Link to="/admin/perfil" style={getLinkStyle('/admin/perfil')}>
+            👤 Mi Perfil
+          </Link>
+          <Link to="/admin/negocio" style={getLinkStyle('/admin/negocio')}>
+            🏢 Comercio
+          </Link>
         </nav>
       </aside>
 
