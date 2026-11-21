@@ -31,13 +31,13 @@ EMAIL_NOTIFICATION_TO=tu_cuenta@gmail.com
 FRONTEND_URL=http://localhost:5173
 ```
 
-| Variable | Qué poner |
-| --- | --- |
-| `SMTP_USER` | La cuenta Gmail que va a enviar. |
-| `SMTP_PASS` | La contraseña de aplicación generada por Google, no la contraseña normal. |
-| `EMAIL_FROM` | La misma dirección Gmail de `SMTP_USER` para esta configuración. |
-| `EMAIL_NOTIFICATION_TO` | El buzón que recibirá las consultas. Puede ser la misma cuenta Gmail. |
-| `FRONTEND_URL` | La dirección donde abrís la página. Los enlaces de recuperación apuntan allí. Para la prueba local: `http://localhost:5173`. |
+| Variable                | Qué poner                                                                                                                    |
+| ----------------------- | ---------------------------------------------------------------------------------------------------------------------------- |
+| `SMTP_USER`             | La cuenta Gmail que va a enviar.                                                                                             |
+| `SMTP_PASS`             | La contraseña de aplicación generada por Google, no la contraseña normal.                                                    |
+| `EMAIL_FROM`            | La misma dirección Gmail de `SMTP_USER` para esta configuración.                                                             |
+| `EMAIL_NOTIFICATION_TO` | El buzón que recibirá las consultas. Puede ser la misma cuenta Gmail.                                                        |
+| `FRONTEND_URL`          | La dirección donde abrís la página. Los enlaces de recuperación apuntan allí. Para la prueba local: `http://localhost:5173`. |
 
 **Tres variables con dirección de correo no significan tres cuentas diferentes.** Para probar, usá la misma dirección en `SMTP_USER`, `EMAIL_FROM` y `EMAIL_NOTIFICATION_TO`.
 
@@ -87,6 +87,67 @@ La implementación actual **no envía confirmación automática al visitante**. 
 
 **Que el formulario diga que la consulta se guardó no demuestra que llegó el mail:** el sistema conserva la consulta aunque falle la notificación. No repitas el envío para intentar forzar el correo, porque crearías consultas duplicadas.
 
+## Responder consultas desde administración (contrato para frontend)
+
+El backend permite `POST /api/admin/consultas/:id/respuestas`, protegido por el mismo token **ADMIN** del resto de administración. No se sincronizan respuestas entrantes: llegan al buzón de la academia. No hay cola ni reintentos automáticos.
+
+### Preparación pendiente de autorización
+
+La migración manual `backend/prisma/migrations/20261120000000_add_inquiry_reply_attempts/migration.sql` debe aplicarse al entorno destino antes de usar este endpoint, siguiendo el procedimiento de despliegue autorizado. **No fue ejecutada como parte de esta implementación.** Validar/generar el cliente Prisma local no aplica migraciones. No se requieren dependencias ni variables nuevas; se reutiliza el transportador SMTP existente. No se comprobó entrega real.
+
+### Solicitud y resultado
+
+```http
+POST /api/admin/consultas/ID_GUARDADO/respuestas
+Authorization: Bearer TOKEN_ADMIN
+Content-Type: application/json
+
+{"mensaje":"Hola, el curso comienza el lunes. Saludos, NEXUS.","claveIdempotencia":"550e8400-e29b-41d4-a716-446655440000"}
+```
+
+- `mensaje`: texto plano de 1–5000 caracteres después de recortar extremos. Admite saltos de línea/tabulaciones; rechaza otros controles. No se envía HTML ni adjuntos. El frontend debe renderizar el texto escapado, nunca como HTML.
+- `claveIdempotencia`: 16–100 caracteres ASCII alfanuméricos, guion o guion bajo; generar una vez por intención de envío (por ejemplo UUID) y conservarla junto al borrador. No regenerar al hacer doble clic, tras timeout, al reconectar ni al repetir una petición.
+- Se rechazan campos adicionales. Destinatario y asunto (`Re: ...`, sin controles) salen exclusivamente de la consulta guardada. `actorId` se toma del token autenticado y se conserva como identificador histórico, sin relación con borrado de usuarios.
+
+HTTP **200**, tanto para un intento terminado como para uno repetido:
+
+```json
+{
+  "repetida": false,
+  "respuesta": {
+    "id": "ID_INTENTO",
+    "consultaId": "ID_GUARDADO",
+    "claveIdempotencia": "550e8400-e29b-41d4-a716-446655440000",
+    "actorId": "ID_ADMIN",
+    "destinatario": "visitante@example.com",
+    "asunto": "Re: Información del curso",
+    "mensaje": "Hola, el curso comienza el lunes. Saludos, NEXUS.",
+    "estado": "ACEPTADA",
+    "proveedorId": "ID_SMTP",
+    "errorCodigo": null,
+    "creadaEn": "2026-11-20T12:00:00.000Z",
+    "finalizadaEn": "2026-11-20T12:00:01.000Z"
+  }
+}
+```
+
+`GET /api/admin/consultas/:id` conserva sus campos actuales y agrega `respuestas: []`, con esos mismos intentos ordenados por `creadaEn`, luego `id`, ascendentes. `proveedorId`, `errorCodigo` y `finalizadaEn` pueden ser `null`. El listado general no incluye historial.
+
+| Estado del intento | Significado y acción del frontend                                                                                                                                                                                                                                                    |
+| ------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `ENVIANDO`         | Reserva persistida antes del envío. Puede estar activo o haber quedado interrumpido. Conservar borrador y clave; consultar historial. Nunca interpretar el paso del tiempo como fallo definitivo.                                                                                    |
+| `ACEPTADA`         | SMTP confirmó aceptación del destinatario exacto. No garantiza entrega/lectura. Historial y `consulta.estado=RESPONDIDA` se guardan en una misma transacción. Puede limpiar el borrador de esa intención.                                                                            |
+| `FALLIDA`          | No hubo aceptación confirmada y el fallo es definitivo (rechazo explícito, autenticación/configuración, o simulación). Conservar borrador; mostrar `errorCodigo`. Tras resolver la causa, un nuevo envío requiere acción explícita y **una clave nueva**; la anterior nunca reenvía. |
+| `INCIERTA`         | Conexión interrumpida/timeout u otro resultado sin evidencia suficiente. Conservar borrador; comprobar con el proveedor/buzón antes de decidir un nuevo envío. Nunca reintentar automáticamente con otra clave.                                                                      |
+
+**Idempotencia:** se reserva una fila única por consulta+clave antes de contactar SMTP. Peticiones concurrentes con esa misma clave recuperan el intento y devuelven `repetida: true` sin enviar de nuevo, cualquiera sea su estado. Reutilizar clave con texto normalizado diferente da **409**. Una clave nueva representa otra intención explícita y puede enviar otro correo; no es un mecanismo de recuperación automática.
+
+Errores HTTP: **400** entrada inválida, **401/403** autenticación/permisos, **404** consulta inexistente, **409** clave reutilizada con otro texto. Si SMTP termina pero falla la persistencia final, se devuelve **503** con código `RESPUESTA_NO_CONFIRMADA` y `detalles.respuestaId`; no se afirma éxito ni se repite SMTP. La reserva normalmente sigue `ENVIANDO` (o puede estar finalizada si se perdió la confirmación de commit). Consultar detalle o repetir la misma clave permite recuperar lo persistido sin reenviar. Si la reserva inicial falla, no se contacta SMTP.
+
+Los códigos seguros de resultado son `SMTP_RECHAZADO`, `SMTP_NO_ACEPTADO`, `SMTP_RESULTADO_INCIERTO`, `CORREO_NO_DISPONIBLE`, `CORREO_SIMULADO`, `RESULTADO_DESCONOCIDO`; no se guardan excepciones ni respuestas SMTP crudas. Los proveedores consola/memoria **no** simulan aceptación: generan `FALLIDA / CORREO_SIMULADO` y no marcan `RESPONDIDA`.
+
+No se pueden eliminar consultas con historial (incluidas fallidas): **409**, respaldado por clave foránea restrictiva. Así se conservan auditoría e idempotencia incluso durante un envío. Los cambios manuales de estado existentes siguen siendo manuales y no envían correo; el estado del intento es la evidencia del envío. No hay reconciliación automática de intentos interrumpidos ni interfaz de administración para resolverlos en este alcance.
+
 ## 5. Probar recuperación de contraseña
 
 Esta prueba genera un enlace real y, si lo usás, **cambia la contraseña de la cuenta elegida**. Usá una cuenta de prueba que controles.
@@ -102,13 +163,13 @@ Por seguridad, la respuesta de recuperación es genérica: no confirma si una cu
 
 ## Si no llega el correo
 
-| Síntoma | Qué revisar |
-| --- | --- |
-| La terminal dice correo simulado | `EMAIL_PROVIDER` debe ser `nodemailer`; reiniciá el backend después de cambiar `.env`. |
-| Error de autenticación | Cuenta correcta y contraseña de aplicación vigente, sin espacios de presentación; no contraseña normal. |
-| Consulta guardada pero sin correo | Destinatario, spam y log del backend; guardar la consulta y entregar el correo son operaciones distintas. |
-| Recuperación sin correo | Cuenta administradora existente y activa, dirección guardada correcta, spam y log del backend. |
-| No conecta con Gmail | Conectividad saliente a `smtp.gmail.com:465` y combinación `SMTP_PORT=465` / `SMTP_SECURE=true`. |
+| Síntoma                                 | Qué revisar                                                                                                                          |
+| --------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------ |
+| La terminal dice correo simulado        | `EMAIL_PROVIDER` debe ser `nodemailer`; reiniciá el backend después de cambiar `.env`.                                               |
+| Error de autenticación                  | Cuenta correcta y contraseña de aplicación vigente, sin espacios de presentación; no contraseña normal.                              |
+| Consulta guardada pero sin correo       | Destinatario, spam y log del backend; guardar la consulta y entregar el correo son operaciones distintas.                            |
+| Recuperación sin correo                 | Cuenta administradora existente y activa, dirección guardada correcta, spam y log del backend.                                       |
+| No conecta con Gmail                    | Conectividad saliente a `smtp.gmail.com:465` y combinación `SMTP_PORT=465` / `SMTP_SECURE=true`.                                     |
 | El enlace abre una dirección incorrecta | Revisá `FRONTEND_URL` y solicitá un enlace nuevo tras reiniciar. `localhost` solo funciona en la misma PC donde corre la aplicación. |
 
 Si necesitás ayuda, compartí únicamente el código de error y el mensaje sin credenciales. **No compartas `.env`, contraseñas, enlaces/tokens de recuperación ni logs completos sin revisarlos.**

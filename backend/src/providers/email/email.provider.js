@@ -1,6 +1,10 @@
 import { ErrorServicioExterno } from '../../shared/errors/AppError.js';
 
 export class ProveedorCorreo {
+  async enviarRespuestaConsulta(_mensaje) {
+    return { estado: 'FALLIDA', errorCodigo: 'CORREO_NO_DISPONIBLE' };
+  }
+
   async enviarRestablecimientoContrasena(_mensaje) {
     throw new ErrorServicioExterno('correo');
   }
@@ -35,6 +39,11 @@ export class ProveedorCorreoMemoria extends ProveedorCorreo {
 
   async enviarNotificacionNuevaConsulta(mensaje) {
     return this.guardar('NUEVA_CONSULTA', mensaje);
+  }
+
+  async enviarRespuestaConsulta(mensaje) {
+    this.guardar('RESPUESTA_CONSULTA', mensaje);
+    return { estado: 'FALLIDA', errorCodigo: 'CORREO_SIMULADO' };
   }
 }
 

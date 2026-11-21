@@ -24,18 +24,15 @@ export default function Registro() {
 
   const enviar = async (event) => {
     event.preventDefault();
-    if (enviando.current || estado === 'cargando') return;
+    if (enviando.current || estado !== 'autenticada') return;
     enviando.current = true;
     setPendiente(true);
     setError('');
     setExito('');
-    const autenticada = estado === 'autenticada';
     try {
       await registrarAdministrador(solicitar, datos);
       setDatos(vacio);
-      setExito(autenticada
-        ? 'Cuenta creada. Tu sesión sigue siendo la del administrador que la creó; no se inició sesión con la nueva cuenta.'
-        : 'Cuenta creada. Iniciá sesión con tu correo y contraseña para acceder al panel.');
+      setExito('Cuenta creada. Tu sesión sigue siendo la del administrador que la creó; no se inició sesión con la nueva cuenta.');
     } catch (fallo) {
       setError(mensajeErrorRegistro(fallo));
       setDatos(actual => ({ ...actual, contrasena: '', confirmarContrasena: '' }));
@@ -48,10 +45,10 @@ export default function Registro() {
   return (
     <section className="admin-login">
       <h1>Crear cuenta de administración</h1>
-      <p>El alta sin sesión solo está permitida para el primer administrador. Si ya existe alguno, necesitás iniciar sesión como administrador para crear otra cuenta.</p>
+      <p>Solo un administrador autenticado puede crear otra cuenta desde este panel.</p>
       <p>Crear una cuenta no inicia ni reemplaza tu sesión.</p>
       <form onSubmit={enviar} className="admin-auth-form" aria-busy={pendiente}>
-        <fieldset disabled={pendiente || estado === 'cargando'} className="admin-registro-fields">
+        <fieldset disabled={pendiente || estado !== 'autenticada'} className="admin-registro-fields">
           {campos.map(([campo, etiqueta, tipo, autocomplete, maximo]) => (
             <div className="admin-auth-form" key={campo}>
               <label htmlFor={`registro-${campo}`}>{etiqueta}</label>
@@ -67,8 +64,7 @@ export default function Registro() {
         {error && <p role="alert">{error}</p>}
         {exito && <p role="status">{exito}</p>}
       </form>
-      <p><Link to="/login">Iniciar sesión</Link></p>
-      {estado === 'autenticada' && <p><Link to="/admin">Volver al panel</Link></p>}
+      <p><Link to="/admin">Volver al panel</Link></p>
     </section>
   );
 }

@@ -9,6 +9,7 @@ export function crearRutasConsultas(servicio, { limitadorConsulta }) {
 
   publicas.post('/', limitadorConsulta, manejadorAsync(controlador.crear));
 
+  administracion.post('/:id/respuestas', manejadorAsync(controlador.responder));
   administracion.get('/', manejadorAsync(controlador.listar));
   administracion.get('/:id', manejadorAsync(controlador.obtener));
   administracion.patch('/:id/estado', manejadorAsync(controlador.cambiarEstado));

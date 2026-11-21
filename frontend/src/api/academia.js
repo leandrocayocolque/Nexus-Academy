@@ -275,6 +275,16 @@ export function crearApiAcademia(solicitar = cliente) {
     eliminarCategoriaAdmin: (id, { signal } = {}) =>
       solicitar(`/admin/categorias/${encodeURIComponent(id)}`, { method: 'DELETE', signal }),
     obtenerConsultaAdmin,
+    responderConsultaAdmin: async (id, { mensaje, claveIdempotencia }, { signal } = {}) => {
+      const resultado = await solicitar(`/admin/consultas/${encodeURIComponent(id)}/respuestas`, {
+        method: 'POST', body: { mensaje, claveIdempotencia }, signal,
+      });
+      if (typeof resultado?.repetida !== 'boolean' || !resultado.respuesta?.id ||
+          !['ENVIANDO', 'ACEPTADA', 'FALLIDA', 'INCIERTA'].includes(resultado.respuesta.estado)) {
+        throw new ErrorApi('La respuesta del envío no es válida. Consultá el historial sin generar otro intento.', { code: 'RESPUESTA_INVALIDA' });
+      }
+      return resultado;
+    },
     actualizarEstadoConsultaAdmin: async (id, estado, { signal } = {}) => {
       if (!['PENDIENTE', 'LEIDA', 'RESPONDIDA'].includes(estado)) {
         throw new ErrorApi('Seleccioná un estado válido para la consulta.', { code: 'VALIDACION_CONSULTA' });

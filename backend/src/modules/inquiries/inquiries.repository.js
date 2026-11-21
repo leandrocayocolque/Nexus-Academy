@@ -9,7 +9,50 @@ export function crearRepositorioConsultas(cliente) {
 
   return Object.freeze({
     buscarPorId(id) {
-      return ejecutar(() => consultas.findUnique({ where: { id }, include: { curso: true } }));
+      return ejecutar(() =>
+        consultas.findUnique({
+          where: { id },
+          include: { curso: true, respuestas: { orderBy: [{ creadaEn: 'asc' }, { id: 'asc' }] } }
+        })
+      );
+    },
+
+    async reservarRespuesta(datos) {
+      const respuestas = exigirDelegado(cliente, 'respuestaConsulta');
+      try {
+        const respuesta = await respuestas.create({ data: datos });
+        return { creada: true, respuesta };
+      } catch (error) {
+        if (error?.code !== 'P2002') throw error;
+        const respuesta = await respuestas.findUnique({
+          where: {
+            consultaId_claveIdempotencia: {
+              consultaId: datos.consultaId,
+              claveIdempotencia: datos.claveIdempotencia
+            }
+          }
+        });
+        if (!respuesta) throw error;
+        return { creada: false, respuesta };
+      }
+    },
+
+    finalizarRespuesta(id, datos) {
+      return ejecutar(() =>
+        cliente.$transaction(async (tx) => {
+          const respuesta = await tx.respuestaConsulta.update({
+            where: { id },
+            data: { ...datos, finalizadaEn: new Date() }
+          });
+          if (datos.estado === 'ACEPTADA') {
+            await tx.consulta.update({
+              where: { id: respuesta.consultaId },
+              data: { estado: 'RESPONDIDA' }
+            });
+          }
+          return respuesta;
+        })
+      );
     },
 
     async listar({ pagina, limite, estado, cursoId, correo, buscar, fechaDesde, fechaHasta } = {}) {

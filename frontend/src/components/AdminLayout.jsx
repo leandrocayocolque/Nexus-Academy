@@ -23,7 +23,7 @@ export default function AdminLayout() {
     ['/admin/promociones', 'Promociones'],
     ['/admin/consultas', 'Consultas'],
     ['/admin/perfil', 'Mi perfil'],
-    ['/registro', 'Crear administrador'],
+    ['/admin/registro', 'Crear administrador'],
     ['/admin/negocio', 'Comercio'],
   ];
 

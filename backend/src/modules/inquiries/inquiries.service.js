@@ -1,12 +1,18 @@
 import { registro } from '../../config/logger.js';
 import { ErrorReferenciaPersistencia } from '../../database/erroresPersistencia.js';
-import { ErrorConsultaNoEncontrada, ErrorCursoNoEncontrado } from '../../shared/errors/AppError.js';
+import {
+  AppError,
+  ErrorConflicto,
+  ErrorConsultaNoEncontrada,
+  ErrorCursoNoEncontrado
+} from '../../shared/errors/AppError.js';
 import { serializarDecimales } from '../../shared/mappers/persistencia.js';
 import {
   esquemaCambiarEstadoConsulta,
   esquemaCrearConsulta,
   esquemaIdentificadorConsulta,
-  esquemaListarConsultas
+  esquemaListarConsultas,
+  esquemaResponderConsulta
 } from './inquiries.schema.js';
 
 function exigirMetodo(objeto, metodo, nombre) {
@@ -66,6 +72,82 @@ export function crearServicioConsultas({
       return serializarDecimales(consulta);
     },
 
+    async responderConsulta(id, entrada, actorId) {
+      const consultaId = esquemaIdentificadorConsulta.parse(id);
+      const datos = esquemaResponderConsulta.parse(entrada);
+      const actor = esquemaIdentificadorConsulta.parse(actorId);
+      const consulta = await repositorioConsultas.buscarPorId(consultaId);
+      if (!consulta) throw new ErrorConsultaNoEncontrada();
+      const { creada, respuesta } = await repositorioConsultas.reservarRespuesta({
+        consultaId,
+        ...datos,
+        actorId: actor,
+        destinatario: consulta.correo,
+        asunto: `Re: ${Array.from(consulta.asunto, (caracter) =>
+          caracter.codePointAt(0) < 32 || caracter.codePointAt(0) === 127 ? ' ' : caracter
+        )
+          .join('')
+          .replace(/ +/g, ' ')}`.slice(0, 204)
+      });
+      if (!creada) {
+        if (respuesta.mensaje !== datos.mensaje) {
+          throw new ErrorConflicto('La clave de idempotencia ya corresponde a otro mensaje.');
+        }
+        return { repetida: true, respuesta: serializarDecimales(respuesta) };
+      }
+
+      let resultado;
+      try {
+        resultado = await proveedorCorreo.enviarRespuestaConsulta({
+          destinatario: respuesta.destinatario,
+          asunto: respuesta.asunto,
+          mensaje: respuesta.mensaje
+        });
+      } catch {
+        // Un error sin clasificación no demuestra que el servidor no aceptó el envío.
+        resultado = { estado: 'INCIERTA', errorCodigo: 'RESULTADO_DESCONOCIDO' };
+      }
+      const estado = ['ACEPTADA', 'FALLIDA', 'INCIERTA'].includes(resultado?.estado)
+        ? resultado.estado
+        : 'INCIERTA';
+      // Nunca almacenar respuestas SMTP crudas ni excepciones del proveedor.
+      const codigosSeguros = [
+        'SMTP_RECHAZADO',
+        'SMTP_NO_ACEPTADO',
+        'SMTP_RESULTADO_INCIERTO',
+        'CORREO_NO_DISPONIBLE',
+        'CORREO_SIMULADO',
+        'RESULTADO_DESCONOCIDO'
+      ];
+      try {
+        const finalizada = await repositorioConsultas.finalizarRespuesta(respuesta.id, {
+          estado,
+          proveedorId:
+            typeof resultado?.id === 'string'
+              ? resultado.id.replace(/[\r\n]/g, '').slice(0, 500)
+              : null,
+          errorCodigo:
+            estado === 'ACEPTADA'
+              ? null
+              : codigosSeguros.includes(resultado?.errorCodigo)
+                ? resultado.errorCodigo
+                : 'RESULTADO_DESCONOCIDO'
+        });
+        return { repetida: false, respuesta: serializarDecimales(finalizada) };
+      } catch {
+        registrador.warn(
+          { consultaId, respuestaId: respuesta.id, estado },
+          'No se pudo confirmar la respuesta; no reenviar automáticamente'
+        );
+        throw new AppError(
+          'El envío no pudo confirmarse. Consulte el historial y no genere otra clave para reintentar.',
+          503,
+          'RESPUESTA_NO_CONFIRMADA',
+          { respuestaId: respuesta.id }
+        );
+      }
+    },
+
     async obtenerConsulta(id) {
       const consulta = await repositorioConsultas.buscarPorId(
         esquemaIdentificadorConsulta.parse(id)
@@ -93,7 +175,16 @@ export function crearServicioConsultas({
       if (!(await repositorioConsultas.buscarPorId(consultaId))) {
         throw new ErrorConsultaNoEncontrada();
       }
-      await repositorioConsultas.eliminar(consultaId);
+      try {
+        await repositorioConsultas.eliminar(consultaId);
+      } catch (error) {
+        if (error?.codigo === 'REFERENCIA_INVALIDA') {
+          throw new ErrorConflicto(
+            'No se puede eliminar una consulta con historial de respuestas.'
+          );
+        }
+        throw error;
+      }
       return { mensaje: 'La consulta fue eliminada correctamente.' };
     }
   });

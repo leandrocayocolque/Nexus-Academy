@@ -30,6 +30,13 @@ enum EstadoConsulta {
   RESPONDIDA
 }
 
+enum EstadoRespuestaConsulta {
+  ENVIANDO
+  ACEPTADA
+  FALLIDA
+  INCIERTA
+}
+
 enum EstadoPromocion {
   ACTIVA
   INACTIVA
@@ -139,10 +146,32 @@ model Consulta {
   actualizadaEn DateTime       @updatedAt @map("actualizada_en") @db.Timestamptz(3)
   curso         Curso?         @relation(fields: [cursoId], references: [id], onDelete: SetNull)
 
+  respuestas    RespuestaConsulta[]
+
   @@index([cursoId])
   @@index([estado, creadaEn])
   @@index([correo])
   @@map("consultas")
+}
+
+model RespuestaConsulta {
+  id                String                  @id @default(uuid())
+  consultaId        String                  @map("consulta_id")
+  claveIdempotencia String                  @map("clave_idempotencia") @db.VarChar(100)
+  actorId           String                  @map("actor_id")
+  destinatario      String
+  asunto            String
+  mensaje           String                  @db.VarChar(5000)
+  estado            EstadoRespuestaConsulta @default(ENVIANDO)
+  proveedorId       String?                 @map("proveedor_id") @db.VarChar(500)
+  errorCodigo       String?                 @map("error_codigo") @db.VarChar(100)
+  creadaEn          DateTime                @default(now()) @map("creada_en") @db.Timestamptz(3)
+  finalizadaEn      DateTime?               @map("finalizada_en") @db.Timestamptz(3)
+  consulta          Consulta                @relation(fields: [consultaId], references: [id], onDelete: Restrict)
+
+  @@unique([consultaId, claveIdempotencia])
+  @@index([consultaId, creadaEn])
+  @@map("respuestas_consulta")
 }
 
 model Promocion {

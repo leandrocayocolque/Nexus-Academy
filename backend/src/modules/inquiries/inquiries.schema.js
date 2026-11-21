@@ -39,11 +39,35 @@ export const esquemaListarConsultas = z
 
 export const esquemaCambiarEstadoConsulta = z.object({ estado: z.enum(estadosConsulta) }).strict();
 
+export const esquemaResponderConsulta = z
+  .object({
+    mensaje: z
+      .string()
+      .trim()
+      .min(1)
+      .max(5_000)
+      .refine(
+        (texto) =>
+          !Array.from(texto).some((caracter) => {
+            const codigo = caracter.codePointAt(0);
+            return (codigo < 32 && ![9, 10, 13].includes(codigo)) || codigo === 127;
+          }),
+        'El mensaje contiene caracteres de control no permitidos.'
+      ),
+    claveIdempotencia: z
+      .string()
+      .min(16)
+      .max(100)
+      .regex(/^[A-Za-z0-9_-]+$/)
+  })
+  .strict();
+
 export const esquemaIdentificadorConsulta = esquemaIdentificador;
 
 export const inquiriesSchemas = Object.freeze({
   crear: esquemaCrearConsulta,
   listar: esquemaListarConsultas,
   cambiarEstado: esquemaCambiarEstadoConsulta,
+  responder: esquemaResponderConsulta,
   identificador: esquemaIdentificadorConsulta
 });

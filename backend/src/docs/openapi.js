@@ -219,7 +219,29 @@ export const especificacionOpenApi = Object.freeze({
           asunto: { type: 'string' },
           mensaje: { type: 'string' },
           estado: { type: 'string', enum: [...estadosConsulta] },
-          creadaEn: { type: 'string', format: 'date-time' }
+          creadaEn: { type: 'string', format: 'date-time' },
+          respuestas: {
+            type: 'array',
+            items: ref('RespuestaConsulta'),
+            description: 'Sólo en el detalle; orden cronológico ascendente.'
+          }
+        }
+      },
+      RespuestaConsulta: {
+        type: 'object',
+        properties: {
+          id: { type: 'string' },
+          consultaId: { type: 'string' },
+          claveIdempotencia: { type: 'string' },
+          actorId: { type: 'string', description: 'Identidad autenticada al reservar el intento.' },
+          destinatario: { type: 'string', format: 'email' },
+          asunto: { type: 'string' },
+          mensaje: { type: 'string', maxLength: 5000 },
+          estado: { type: 'string', enum: ['ENVIANDO', 'ACEPTADA', 'FALLIDA', 'INCIERTA'] },
+          proveedorId: { type: 'string', nullable: true },
+          errorCodigo: { type: 'string', nullable: true },
+          creadaEn: { type: 'string', format: 'date-time' },
+          finalizadaEn: { type: 'string', format: 'date-time', nullable: true }
         }
       },
       Promocion: {
@@ -259,8 +281,8 @@ export const especificacionOpenApi = Object.freeze({
     '/api/autenticacion/registro': {
       post: operacion('Autenticación', 'Registrar administrador', {
         description:
-          'Sin administradores existentes, el registro es abierto (alta inicial). Luego requiere el JWT de un administrador.',
-        security: [{}, { bearerAuth: [] }],
+          'Requiere siempre un JWT válido de ADMIN, incluso si no existen administradores. No permite registro anónimo.',
+        security: [{ bearerAuth: [] }],
         requestBody: cuerpo({
           type: 'object',
           required: ['correo', 'nombre', 'apellido', 'contrasena', 'confirmarContrasena'],
@@ -641,7 +663,47 @@ export const especificacionOpenApi = Object.freeze({
         admin: true,
         respuestas: {
           200: respuestaMensaje('Consulta eliminada.'),
-          404: refRespuesta('NoEncontrado')
+          404: refRespuesta('NoEncontrado'),
+          409: errorRespuesta('No se elimina una consulta con historial de respuestas.')
+        }
+      })
+    },
+    '/api/admin/consultas/{id}/respuestas': {
+      parameters: [parametroId()],
+      post: operacion('Consultas', 'Responder por correo con intento persistido e idempotencia', {
+        admin: true,
+        description:
+          'Destinatario y asunto derivados de la consulta. HTTP 200 no implica aceptación: revisar respuesta.estado. Duplicados no reenvían. ACEPTADA significa aceptación SMTP, no entrega al buzón. ENVIANDO/INCIERTA requieren revisión, nunca reintento automático con otra clave.',
+        requestBody: cuerpo({
+          type: 'object',
+          additionalProperties: false,
+          required: ['mensaje', 'claveIdempotencia'],
+          properties: {
+            mensaje: {
+              type: 'string',
+              minLength: 1,
+              maxLength: 5000,
+              description:
+                'Texto plano; se recortan extremos. Admite tabulaciones y saltos de línea, no otros controles.'
+            },
+            claveIdempotencia: {
+              type: 'string',
+              minLength: 16,
+              maxLength: 100,
+              pattern: '^[A-Za-z0-9_-]+$'
+            }
+          }
+        }),
+        respuestas: {
+          200: ok('Intento finalizado o duplicado recuperado.', {
+            type: 'object',
+            properties: { repetida: { type: 'boolean' }, respuesta: ref('RespuestaConsulta') }
+          }),
+          404: refRespuesta('NoEncontrado'),
+          409: errorRespuesta('La clave ya está asociada a otro mensaje.'),
+          503: errorRespuesta(
+            'RESPUESTA_NO_CONFIRMADA: la reserva permanece; consultar detalle y reutilizar la misma clave, nunca reenviar automáticamente.'
+          )
         }
       })
     },

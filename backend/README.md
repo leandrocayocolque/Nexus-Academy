@@ -156,7 +156,7 @@ Cada módulo expone `*.controller.js` y `*.routes.js`; `src/routes.js` los agreg
 
 | Módulo        | Públicas                                                                                      | Administración (`/api/admin`)                                                                      |
 | ------------- | --------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------- |
-| Autenticación | `POST /api/autenticacion/{registro,login,logout,recuperar-contrasena,restablecer-contrasena}` | —                                                                                                  |
+| Autenticación | `POST /api/autenticacion/{login,recuperar-contrasena,restablecer-contrasena}`; `POST /api/autenticacion/logout` (token), `POST /api/autenticacion/registro` (token ADMIN) | —                                                                                                  |
 | Usuario       | `GET/PATCH /api/usuarios/me` (requiere token)                                                 | —                                                                                                  |
 | Academia      | `GET /api/academia`                                                                           | `PUT /academia`                                                                                    |
 | Categorías    | `GET /api/categorias` (sólo activas)                                                          | `GET, POST /categorias`, `PATCH, DELETE /categorias/:id`                                           |
@@ -168,7 +168,7 @@ Cada módulo expone `*.controller.js` y `*.routes.js`; `src/routes.js` los agreg
 
 Decisiones de la capa HTTP:
 
-- **Registro:** mientras no exista ningún administrador, `POST /api/autenticacion/registro` es abierto (alta inicial). Después exige el token de un administrador, para que nadie pueda autoasignarse permisos.
+- **Registro:** `POST /api/autenticacion/registro` siempre exige un token válido de ADMIN, incluso si no existe ningún administrador. El alta se realiza desde `/admin/registro`, dentro del panel autenticado, sin reemplazar la sesión del creador. No hay registro público ni alta inicial anónima; la provisión del primer administrador queda fuera de este flujo.
 - **Logout:** los JWT no tienen estado; el endpoint valida el token y el cliente lo descarta.
 - **Visibilidad pública:** los cursos inactivos no aparecen en `/api/cursos` y su detalle responde 404; las categorías públicas son sólo las activas.
 - **Límites de solicitudes:** login y registro usan el limitador de inicio de sesión; recuperación/restablecimiento, el de restablecimiento; `POST /api/consultas`, el de consultas.

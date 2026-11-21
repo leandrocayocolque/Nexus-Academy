@@ -54,7 +54,6 @@ export default function Login() {
           ¿Olvidaste tu contraseña?
         </Link>
       </div>
-      <p><Link to="/registro">Crear cuenta de administración</Link> (primer administrador o alta autorizada).</p>
       <p>Por seguridad, al recargar la página deberás iniciar sesión nuevamente.</p>
     </section>
 

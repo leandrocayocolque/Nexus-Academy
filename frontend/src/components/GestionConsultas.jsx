@@ -1,7 +1,8 @@
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useRef, useState, useSyncExternalStore } from 'react';
 import { toast } from 'sonner';
 import { useSesion } from '../auth/SesionContext';
 import { mutarYRecargar } from '../api/academia';
+import { crearAlmacenRespuestas, editarBorrador, iniciarIntento, confirmarIntento, nuevoIntento, validarMensaje } from '../utils/respuestasConsulta';
 
 export default function GestionConsultas() {
   const { academia } = useSesion();
@@ -13,6 +14,22 @@ export default function GestionConsultas() {
   const [mensajeActivo, setMensajeActivo] = useState(null);
   const vida = useRef(null);
   const ocupado = useRef(false);
+  const [borradores] = useState(crearAlmacenRespuestas);
+  const panel = useRef(null);
+  const [conHistorial, setConHistorial] = useState({});
+  const registrarHistorial = useCallback((id) => setConHistorial(actual => ({ ...actual, [id]: true })), []);
+  const registrarAceptacion = useCallback((id) => {
+    if (vida.current?.signal.aborted) return;
+    setConsultas(actual => actual.map(c => c.id === id ? { ...c, estado: 'RESPONDIDA' } : c));
+    setMensajeActivo(actual => actual?.id === id ? { ...actual, estado: 'RESPONDIDA' } : actual);
+  }, []);
+
+  useEffect(() => {
+    if (!mensajeActivo?.id) return;
+    const anterior = document.activeElement;
+    panel.current?.focus();
+    return () => { if (anterior?.isConnected) anterior.focus(); };
+  }, [mensajeActivo?.id]);
 
   useEffect(() => {
     const controller = new AbortController();
@@ -89,7 +106,7 @@ export default function GestionConsultas() {
   };
 
   const handleEliminar = (id) => {
-    if (ocupado.current) return;
+    if (ocupado.current || conHistorial[id] || borradores.obtener(id)?.borrador.bloqueado) return;
     const controller = vida.current;
     toast('¿Eliminar mensaje?', {
       description: 'Esta acción no se puede deshacer.',
@@ -98,7 +115,14 @@ export default function GestionConsultas() {
         onClick: () => {
           if (controller !== vida.current || controller.signal.aborted) return;
           return ejecutar(
-            opciones => academia.eliminarConsultaAdmin(id, opciones),
+            async opciones => {
+              const detalle = await academia.obtenerConsultaAdmin(id, opciones);
+              if (detalle.respuestas?.length) {
+                registrarHistorial(id);
+                throw new Error('No se pudo eliminar la consulta.');
+              }
+              return academia.eliminarConsultaAdmin(id, opciones);
+            },
             'Mensaje eliminado.',
             () => setMensajeActivo(actual => actual?.id === id ? null : actual),
           );
@@ -110,6 +134,7 @@ export default function GestionConsultas() {
 
   const handleVerMensaje = (consulta) => {
     if (ocupado.current) return;
+    borradores.abrir(consulta.id);
     setMensajeActivo(consulta);
     if (consulta.estado === 'PENDIENTE') {
       handleMarcarLeido(consulta.id);
@@ -127,7 +152,7 @@ export default function GestionConsultas() {
         <p style={{ color: '#9ca3af', marginTop: '0.5rem' }}>Administrá los mensajes recibidos desde el formulario de contacto público.</p>
       </header>
 
-      {error && <p role="alert">{error} <button disabled={pendiente} onClick={recargar}>Actualizar lista</button></p>}
+      {error && !mensajeActivo && <p role="alert">{error} <button disabled={pendiente} onClick={recargar}>Actualizar lista</button></p>}
       {cargando && <p role="status">Cargando consultas...</p>}
       {pendiente && <p role="status">Actualizando consulta...</p>}
       {/* TABLA PRINCIPAL DE CONSULTAS */}
@@ -170,9 +195,9 @@ export default function GestionConsultas() {
                     <button disabled={pendiente || cargando || !!error} style={btnAccionStyle} onClick={() => handleVerMensaje(consulta)}>
                       Leer
                     </button>
-                    <button disabled={pendiente || cargando || !!error} style={btnEliminarStyle} onClick={() => handleEliminar(consulta.id)}>
+                    {!conHistorial[consulta.id] && <button disabled={pendiente || cargando || !!error} style={btnEliminarStyle} onClick={() => handleEliminar(consulta.id)}>
                       Eliminar
-                    </button>
+                    </button>}
                   </td>
                 </tr>
               ))
@@ -189,8 +214,19 @@ export default function GestionConsultas() {
 
       {mensajeActivo && (
         <div className="admin-modal-overlay">
-          <div className="admin-message-panel">
-            <h3 style={{ color: 'var(--primary-green)', marginTop: 0, marginBottom: '0.5rem', fontSize: '1.5rem' }}>
+          <div className="admin-message-panel" role="dialog" aria-modal="true" aria-labelledby="consulta-asunto" tabIndex={-1} ref={panel} onKeyDown={evento => {
+            if (evento.key === 'Escape') cerrarModal();
+            if (evento.key !== 'Tab') return;
+            const controles = [...panel.current.querySelectorAll('button:not(:disabled), input:not(:disabled), textarea:not(:disabled)')];
+            const primero = controles[0];
+            const ultimo = controles.at(-1);
+            if (evento.shiftKey && (document.activeElement === primero || document.activeElement === panel.current)) {
+              evento.preventDefault(); ultimo?.focus();
+            } else if (!evento.shiftKey && document.activeElement === ultimo) {
+              evento.preventDefault(); primero?.focus();
+            }
+          }}>
+            <h3 id="consulta-asunto" style={{ color: 'var(--primary-green)', marginTop: 0, marginBottom: '0.5rem', fontSize: '1.5rem' }}>
               {mensajeActivo.asunto}
             </h3>
             
@@ -218,15 +254,15 @@ export default function GestionConsultas() {
                 </button>
               ))}
             </div>
-            <p style={{ color: 'var(--text-muted)', fontSize: '0.85rem' }}>Cambiar el estado a Respondida solo organiza la bandeja; no envía ningún correo.</p>
             <div className="admin-message-body">
               {mensajeActivo.mensaje}
             </div>
             
+            <RespuestasConsulta key={mensajeActivo.id} consulta={mensajeActivo} academia={academia} almacen={borradores} registrarHistorial={registrarHistorial} registrarAceptacion={registrarAceptacion} bloqueada={pendiente} />
             <div className="admin-actions" style={{ marginTop: '2rem' }}>
-              <button disabled={pendiente || cargando || !!error} onClick={() => handleEliminar(mensajeActivo.id)} style={btnEliminarStyle}>
+              {!conHistorial[mensajeActivo.id] && <button disabled={pendiente || cargando || !!error} onClick={() => handleEliminar(mensajeActivo.id)} style={btnEliminarStyle}>
                 Eliminar Mensaje
-              </button>
+              </button>}
               <button onClick={cerrarModal} className="admin-button-primary">
                 Cerrar
               </button>
@@ -236,6 +272,128 @@ export default function GestionConsultas() {
       )}
     </div>
   );
+}
+
+function RespuestasConsulta({ consulta, academia, almacen, registrarHistorial, registrarAceptacion, bloqueada }) {
+  const { id } = consulta;
+  const suscribir = useCallback(escucha => almacen.suscribir(id, escucha), [almacen, id]);
+  const obtener = useCallback(() => almacen.obtener(id), [almacen, id]);
+  const vista = useSyncExternalStore(suscribir, obtener);
+  const vivo = useRef(false);
+  const actualizar = cambios => almacen.actualizar(id, cambios);
+
+  useEffect(() => {
+    vivo.current = true;
+    const controller = new AbortController();
+    const revision = almacen.nuevaRevision(id);
+    academia.obtenerConsultaAdmin(id, { signal: controller.signal }).then(detalle => {
+      if (controller.signal.aborted || !almacen.esActual(id, revision)) return;
+      const cache = almacen.obtener(id);
+      if (!Array.isArray(detalle.respuestas)) throw new Error('Historial no disponible');
+      const cambios = { respuestas: detalle.respuestas, destinatario: detalle.correo, cargando: false };
+      // Una visita nueva tampoco debe reemplazar un intento incierto persistido.
+      const sinResolver = detalle.respuestas.findLast(r => ['ENVIANDO', 'INCIERTA'].includes(r.estado));
+      const confirmado = detalle.respuestas.find(r => r.claveIdempotencia === cache.borrador.claveIdempotencia);
+      if (confirmado && cache.borrador.bloqueado && !cache.pendiente) {
+        cambios.borrador = confirmarIntento(cache.borrador, confirmado);
+        cambios.aviso = 'Consulta respondida correctamente';
+        if (confirmado.estado === 'ACEPTADA') registrarAceptacion(id);
+      }
+      if (sinResolver && !cache.pendiente) cambios.borrador = {
+        mensaje: sinResolver.mensaje, claveIdempotencia: sinResolver.claveIdempotencia,
+        bloqueado: true, estado: sinResolver.estado,
+      };
+      if (detalle.respuestas.length) registrarHistorial(id);
+      almacen.actualizar(id, cambios);
+    }).catch(() => {
+      if (!controller.signal.aborted && almacen.esActual(id, revision)) {
+        almacen.actualizar(id, { cargando: false, error: 'No se pudo cargar el historial. Cerrá y volvé a abrir la consulta para actualizarlo.' });
+      }
+    });
+    return () => {
+      vivo.current = false;
+      controller.abort();
+    };
+  }, [academia, id, almacen, registrarHistorial, registrarAceptacion]);
+
+  const enviar = async evento => {
+    evento.preventDefault();
+    const cache = almacen.obtener(id);
+    if (bloqueada || cache.pendiente || cache.cargando || !cache.destinatario || cache.error) return;
+    const borrador = cache.borrador;
+    const invalidacion = validarMensaje(borrador.mensaje);
+    if (invalidacion) { actualizar({ aviso: invalidacion }); return; }
+    almacen.nuevaRevision(id);
+    actualizar({ borrador: iniciarIntento(borrador), pendiente: true, aviso: '' });
+    registrarHistorial(id); // Desde ahora borrar podría competir con la reserva del envío.
+    try {
+      const { respuesta } = await academia.responderConsultaAdmin(id, borrador);
+      const revision = almacen.nuevaRevision(id);
+      actualizar({
+        cargando: false,
+        borrador: confirmarIntento(borrador, respuesta),
+        respuestas: [...almacen.obtener(id).respuestas.filter(r => r.id !== respuesta.id), respuesta],
+        aviso: 'Consulta respondida correctamente',
+      });
+      if (respuesta.estado === 'ACEPTADA') registrarAceptacion(id);
+      if (vivo.current) toast.success('Consulta respondida correctamente');
+      // La aceptación ya se refleja antes de intentar actualizar: nunca se deshace.
+      try {
+        const detalle = await academia.obtenerConsultaAdmin(id);
+        if (!Array.isArray(detalle.respuestas)) throw new Error('Historial no disponible');
+        if (almacen.esActual(id, revision)) actualizar({ respuestas: detalle.respuestas });
+      } catch {
+        // El registro confirmado se conserva aunque falle la actualización del historial.
+      }
+    } catch {
+      actualizar({ aviso: 'No se pudo guardar la respuesta.' });
+    } finally {
+      actualizar({ pendiente: false, cargando: false });
+    }
+  };
+
+  const { borrador, respuestas } = vista;
+  return (
+    <section className="admin-inquiry-replies" aria-labelledby="respuestas-titulo" aria-busy={vista.pendiente || vista.cargando}>
+      <h4 id="respuestas-titulo">Responder consulta</h4>
+      {vista.cargando && <p role="status">Cargando historial...</p>}
+      {vista.error && <p role="alert">{vista.error}</p>}
+      <ol className="admin-reply-history" aria-label="Historial de respuestas">
+        {respuestas.map(respuesta => (
+          <li key={respuesta.id}>
+            <strong>Respuesta registrada</strong>
+            <p><time dateTime={respuesta.creadaEn}>{fechaRespuesta(respuesta.creadaEn)}</time></p>
+            <div className="admin-reply-body">{respuesta.mensaje}</div>
+          </li>
+        ))}
+      </ol>
+      {!vista.cargando && !vista.error && !respuestas.length && <p>Sin respuestas registradas.</p>}
+      <form onSubmit={enviar} className="admin-reply-form">
+        <label htmlFor="respuesta-destinatario">Destinatario</label>
+        <input id="respuesta-destinatario" value={vista.destinatario} readOnly />
+        <label htmlFor="respuesta-mensaje">Respuesta</label>
+        <textarea id="respuesta-mensaje" rows={6} maxLength={5000} value={borrador.mensaje}
+          readOnly={borrador.bloqueado} disabled={bloqueada || vista.cargando || vista.pendiente || !!vista.error}
+          aria-describedby="respuesta-contador"
+          onChange={evento => actualizar({ borrador: editarBorrador(almacen.obtener(id).borrador, evento.target.value), aviso: '' })} />
+        <span id="respuesta-contador">{borrador.mensaje.length}/5000 caracteres</span>
+        {vista.aviso && <p role="status" className={vista.aviso === 'Consulta respondida correctamente' ? 'admin-success' : undefined}>{vista.aviso}</p>}
+        <div className="admin-actions">
+          {borrador.estado === 'FALLIDA' && <button type="button" disabled={vista.pendiente || vista.cargando}
+            onClick={() => actualizar({ borrador: nuevoIntento(almacen.obtener(id).borrador), aviso: '' })}>Editar respuesta</button>}
+          <button type="submit" className="admin-button-primary"
+            disabled={bloqueada || vista.pendiente || vista.cargando || !!vista.error || !!validarMensaje(borrador.mensaje)}>
+            {vista.pendiente ? 'Consultando respuesta...' : borrador.bloqueado ? 'Consultar respuesta' : 'Responder consulta'}
+          </button>
+        </div>
+      </form>
+    </section>
+  );
+}
+
+function fechaRespuesta(valor) {
+  const fecha = new Date(valor);
+  return valor && !Number.isNaN(fecha.getTime()) ? fecha.toLocaleString('es-AR') : 'Sin fecha';
 }
 
 const estadosConsulta = { PENDIENTE: 'Pendiente', LEIDA: 'Leída', RESPONDIDA: 'Respondida' };

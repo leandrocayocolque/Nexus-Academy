@@ -638,6 +638,54 @@
   line-height: 1.7;
 }
 
+.admin-inquiry-replies {
+  margin-top: var(--space-5);
+  padding-top: var(--space-3);
+  border-top: 1px solid var(--border-control);
+}
+
+.admin-reply-form {
+  display: grid;
+  gap: var(--space-2);
+}
+
+.admin-reply-form :is(input, textarea) {
+  padding: var(--space-2);
+  background: var(--bg-input);
+  color: var(--text-main);
+  border: 1px solid var(--border-control);
+  border-radius: var(--radius-control);
+}
+
+.admin-reply-form [readonly] {
+  border-style: dashed;
+}
+
+.admin-reply-history {
+  display: grid;
+  gap: var(--space-3);
+  padding: 0;
+  list-style: none;
+}
+
+.admin-reply-history li {
+  min-width: 0;
+  padding: var(--space-3);
+  background: var(--bg-dark);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-control);
+}
+
+.admin-reply-history p {
+  margin-block: var(--space-1);
+}
+
+.admin-reply-body {
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+  line-height: 1.7;
+}
+
 .admin-login {
   width: calc(100% - 2rem);
   max-width: 460px;

@@ -13,18 +13,30 @@ export class ProveedorCorreoConsola extends ProveedorCorreo {
     );
 
     if (datos.enlace && process.env.NODE_ENV === 'development') {
-      console.log(`\n🔗 [DEV] Enlace de recuperación para ${datos.destinatario}:\n${datos.enlace}\n`);
+      console.log(
+        `\n🔗 [DEV] Enlace de recuperación para ${datos.destinatario}:\n${datos.enlace}\n`
+      );
     }
 
     return { id: `consola-${tipo.toLowerCase()}` };
   }
 
   async enviarRestablecimientoContrasena({ destinatario, nombre, enlace, expiraEn }) {
-    return this.registrar('RESTABLECIMIENTO_CONTRASENA', { destinatario, nombre, enlace, expiraEn });
+    return this.registrar('RESTABLECIMIENTO_CONTRASENA', {
+      destinatario,
+      nombre,
+      enlace,
+      expiraEn
+    });
   }
 
   async enviarConfirmacionConsulta({ destinatario, nombre, consultaId }) {
     return this.registrar('CONFIRMACION_CONSULTA', { destinatario, nombre, consultaId });
+  }
+
+  async enviarRespuestaConsulta({ destinatario }) {
+    this.registrar('RESPUESTA_CONSULTA', { destinatario });
+    return { estado: 'FALLIDA', errorCodigo: 'CORREO_SIMULADO' };
   }
 
   async enviarNotificacionNuevaConsulta({ destinatario, consulta }) {

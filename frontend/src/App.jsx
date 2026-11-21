@@ -51,12 +51,12 @@ export default function App() {
             <Route path="/cursos/:id" element={<DetalleCurso />} />
             <Route path="/contacto" element={<Contacto />} />
             <Route path="/login" element={<Login />} />
-            <Route path="/registro" element={<Registro />} />
             <Route path="/recuperar-contrasena" element={<RecuperarContrasena />} />
             <Route path="/restablecer-contrasena" element={<RestablecerContrasena />} />
 
             {/* Rutas Privadas */}
             <Route path="/admin" element={<AdminLayout />}>
+              <Route path="registro" element={<Registro />} />
               <Route index element={<Dashboard />} /> {/* Ruta por defecto: /admin */}
               <Route path="cursos" element={<GestionCursos />} /> {/* /admin/cursos */}
               <Route path="categorias" element={<GestionCategorias />} /> {/* /admin/categorias */}
